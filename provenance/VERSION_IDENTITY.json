@@ -1,0 +1,9 @@
+{
+  "product_version": "0.3.0-recovery.1",
+  "python_distribution_version": "0.3.0rc1",
+  "tag": "v0.3.0-recovery.1",
+  "status": "full-functional-recovery-candidate",
+  "lineage_id": "FABLE5-ASSURANCE-TOOLKIT-FULL-FUNCTIONAL-RECOVERY-20260713",
+  "historical_lineage_continuity_claim": false,
+  "functional_contract_continuity": true
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": "task-state/v1",
+  "task_id": "synthetic-task",
+  "terminal_state": "OPEN",
+  "terminal_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "new_attempt_identity": "synthetic-attempt-1",
+  "authorized_executor": "synthetic-executor",
+  "single_writer": true,
+  "prerequisites": {
+    "authorization_scope_matches": true,
+    "recovery_path_ready": true
+  },
+  "target": {
+    "proposed_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "handoff-observation/v1",
+  "carrier_identity": "direct-v1-ax1-ax2",
+  "carrier_sha256": "d3d88db56c9ed8c6957a323780d53daff9383215492358f7e74f4865d0a2aa49",
+  "dimensions": {
+    "summary": "Synthetic project summary",
+    "technical": "Deterministic local route",
+    "state": "Recovery candidate",
+    "task": "Independent review is the next gate",
+    "development": "Future work remains separately authorized",
+    "facts_evidence": "All identities are synthetic or fixed contract hashes"
+  },
+  "evidence_cross_cutting": true,
+  "authority_states": ["ADJUDICATED", "AUTHORIZED", "NOT_AUTHORIZED", "REJECTED"],
+  "artifact_status": "RECOVERY_CANDIDATE",
+  "source_references": [],
+  "direct_evidence_conflict": false
+}

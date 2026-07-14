@@ -1,0 +1,12 @@
+{
+  "schema_version": "module-contract-index/v1",
+  "modules": [
+    {"module_id": "PM-01", "name": "RISK_ROUTER", "public_interface": "classify"},
+    {"module_id": "PM-02", "name": "GOVERNANCE_PACK_VALIDATOR", "public_interface": "check"},
+    {"module_id": "PM-03", "name": "TERMINAL_STATE_AND_ARTIFACT_GUARD", "public_interface": "guard"},
+    {"module_id": "PM-04", "name": "CORPUS_INTEGRITY_GUARD", "public_interface": "corpus freeze|verify"},
+    {"module_id": "PM-05", "name": "HANDOFF_AND_CLOSEOUT_VALIDATOR", "public_interface": "handoff|closeout"},
+    {"module_id": "PM-06", "name": "SUCCESSOR_EVAL_HARNESS", "public_interface": "eval prepare|score"}
+  ],
+  "top_level_product_module_count": 6
+}

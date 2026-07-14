@@ -1,0 +1,16 @@
+{
+  "contract": "SESSION_HANDOFF_SIX_DIMENSIONS_AX1_AX2",
+  "direct_carrier": {
+    "identity": "direct-v1-ax1-ax2",
+    "sha256": "d3d88db56c9ed8c6957a323780d53daff9383215492358f7e74f4865d0a2aa49"
+  },
+  "skill_candidate_carrier": {
+    "identity": "skill-v1-candidate-ax1-ax2",
+    "package_sha256": "83c6b4895f0d4867b85e6efc6c9e0b54da2602b49f6a7d8bf50dc8ef8386e610",
+    "runtime_sha256": "80b6735aa824d2a1976401c4ebcb1379f06bf40fbb005bac30239d03b80def52",
+    "installed": false,
+    "canonical_runtime": false
+  },
+  "semantic_fork_created": false,
+  "carrier_content_copied": false
+}

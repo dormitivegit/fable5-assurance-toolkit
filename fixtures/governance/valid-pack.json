@@ -1,0 +1,36 @@
+{
+  "pack_version": "governance-pack/v1",
+  "claims": [
+    {
+      "id": "CLM-001",
+      "text": "Synthetic evidence exists.",
+      "load_bearing": true,
+      "verification": "VERIFIED",
+      "source_identity": {
+        "path": "fixtures/governance/source.txt",
+        "sha256": "08b195d5477c8e0ec2e3e83d7d6c2b91a5f339fce1fa36da67a3b6581dd063e4"
+      },
+      "location": "synthetic verified evidence anchor",
+      "conflict": "NONE"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "DEC-001",
+      "subject": "synthetic-object",
+      "state": "AUTHORIZED",
+      "decider": "ZRN",
+      "object_identity": "sha256:synthetic-object"
+    }
+  ],
+  "actions": [
+    {
+      "id": "ACT-001",
+      "executed": false,
+      "mutates": false,
+      "object_identity": "sha256:synthetic-object"
+    }
+  ],
+  "task": {"stop_conditions": ["identity drift"]},
+  "result": "PASS_VALID_SYNTHETIC_PACK"
+}

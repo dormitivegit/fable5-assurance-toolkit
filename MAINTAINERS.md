@@ -1,0 +1,9 @@
+# Maintainers
+
+```text
+PRODUCT_OWNER_AND_FINAL_AUTHORITY=ZRN
+INITIAL_TECHNICAL_CUSTODIAN=ZRN
+TECHNICAL_CUSTODIAN_ROLE=ASSURANCE_TOOLKIT_CUSTODIAN
+```
+
+Custodianship may change only through an append-only ZRN adjudication.

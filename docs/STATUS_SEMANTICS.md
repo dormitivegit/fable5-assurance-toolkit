@@ -1,0 +1,19 @@
+# Status semantics
+
+```text
+IMPLEMENTED=YES
+MECHANICALLY_VERIFIED=YES
+RECOVERY_CANDIDATE_COMMITTED=YES
+RECOVERY_CANDIDATE_TAGGED=YES
+PORTABLE_RECOVERY_ARTIFACTS_CREATED=YES
+
+INDEPENDENTLY_REVIEWED=NO
+USER_ACCEPTED=NO
+VALIDATED=NO
+CANONICAL=NO
+INSTALLED=NO
+PRODUCTION_READY=NO
+```
+
+The first block becomes truthful only after the final mechanical task gates.
+Tests can never change any field in the second block.

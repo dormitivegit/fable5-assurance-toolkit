@@ -1,0 +1,6 @@
+{
+  "schema_version": "finding/v1",
+  "required": ["code", "severity", "path", "location", "message", "rule_version", "evidence"],
+  "severity": ["ERROR", "WARN", "INFO", "HOLD"],
+  "code_families": ["RR", "GP", "TG", "CI", "HC", "EV", "PI", "IN"]
+}
