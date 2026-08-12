@@ -1,0 +1,23 @@
+{
+  "schema_version": "handoff-observation/v1",
+  "carrier_identity": "direct-v1-ax1-ax2",
+  "carrier_sha256": "d3d88db56c9ed8c6957a323780d53daff9383215492358f7e74f4865d0a2aa49",
+  "dimensions": {
+    "summary": "A simulated upstream coding agent changed one bounded file.",
+    "technical": "PM-01 classified the edit and PM-04 produced before-and-after integrity evidence.",
+    "state": "Candidate evidence is ready for human review; no acceptance is claimed.",
+    "task": "A human reviews the deterministic findings and decides whether the change is acceptable.",
+    "development": "Deployment, promotion, and future changes are outside this example.",
+    "facts_evidence": "The run asserts T1 classification, CI03_SOURCE_CHANGED detection, and a matching post-change manifest."
+  },
+  "evidence_cross_cutting": true,
+  "authority_states": [
+    "ADJUDICATED",
+    "AUTHORIZED",
+    "NOT_AUTHORIZED",
+    "REJECTED"
+  ],
+  "artifact_status": "CANDIDATE",
+  "source_references": [],
+  "direct_evidence_conflict": false
+}

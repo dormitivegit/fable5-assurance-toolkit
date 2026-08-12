@@ -1,0 +1,12 @@
+{
+  "schema_version": "risk-descriptor/v1",
+  "task_id": "agent-change-assurance-example",
+  "action_class": "edit",
+  "target_class": "repository",
+  "reversibility": "reversible",
+  "mutation_requested": true,
+  "production_effect": "none",
+  "credential_or_identity_effect": "none",
+  "authority_effect": "none",
+  "recovery_path": "restore the frozen baseline or revert the version-controlled change"
+}

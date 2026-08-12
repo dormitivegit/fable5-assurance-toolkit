@@ -39,6 +39,19 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src \
 Use `--format json` when another tool or AI agent will consume the result. Run
 `python3 -m assurance_toolkit <command> --help` for command-specific options.
 
+## Try the end-to-end example
+
+Run a deterministic walkthrough that surrounds a simulated agent-generated
+change with risk, integrity, and handoff evidence:
+
+```sh
+./examples/agent-change-assurance/run.sh
+```
+
+The example is local, network-free, self-cleaning, and leaves acceptance to a
+human reviewer. See the [example guide](examples/agent-change-assurance/README.md)
+for the expected flow and claim boundaries.
+
 ## Modules
 
 | Module | CLI surface | Purpose |
