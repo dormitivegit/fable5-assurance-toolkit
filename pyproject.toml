@@ -1,6 +1,6 @@
 [project]
 name = "fable5-assurance-toolkit"
-version = "0.3.0rc1"
+version = "0.3.0rc2"
 description = "Local deterministic assurance controls reconstructed under a new lineage"
 requires-python = ">=3.11"
 dependencies = []

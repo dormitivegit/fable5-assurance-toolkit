@@ -97,8 +97,8 @@ production. Those decisions remain with people responsible for the project.
 ## Project status and provenance
 
 ```text
-PRODUCT_VERSION=0.3.0-recovery.1
-PYTHON_DISTRIBUTION_VERSION=0.3.0rc1
+PRODUCT_VERSION=0.3.0-recovery.2
+PYTHON_DISTRIBUTION_VERSION=0.3.0rc2
 STATUS=full-functional-recovery-candidate
 LINEAGE_ID=FABLE5-ASSURANCE-TOOLKIT-FULL-FUNCTIONAL-RECOVERY-20260713
 ```
@@ -107,8 +107,9 @@ This repository is a clean-room functional reconstruction under a new Git
 lineage, based on accepted architecture, contracts, sanitized fixtures, tests,
 and pilot requirements. It claims continuity of the accepted functional
 contract, not recovery of historical source bytes, commits, or tags. The
-`v0.3.0-recovery.1` tag identifies this recovery candidate in the reconstructed
-lineage.
+`v0.3.0-recovery.1` tag identifies the first recovery candidate in the
+reconstructed lineage; `v0.3.0-recovery.2` records the subsequent public
+open-source surface hardening.
 
 The current status means the six modules and public interface have been
 reconstructed and mechanically tested. It does **not** claim independent
