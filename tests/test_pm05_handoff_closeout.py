@@ -168,9 +168,9 @@ class HandoffTests(DocumentFixtureMixin, unittest.TestCase):
 
 
 class CloseoutTests(DocumentFixtureMixin, unittest.TestCase):
-    def codes(self, value, receipt=None):
+    def codes(self, value, receipt=None, authority_identity=None):
         path = self.write("closeout.json", value)
-        return validate_closeout(path, guard_receipt=receipt).to_dict()
+        return validate_closeout(path, guard_receipt=receipt, authority_identity=authority_identity).to_dict()
 
     def test_valid_closeout_passes(self):
         self.assertEqual("PASS", self.codes(self.closeout())["result"])
@@ -202,9 +202,21 @@ class CloseoutTests(DocumentFixtureMixin, unittest.TestCase):
 
     def test_exact_mutation_authorization_passes(self):
         action = {"id": "A", "executed": True, "mutates": True, "authorization_ref": "D", "object_identity": "obj"}
-        auth = {"id": "D", "state": "AUTHORIZED", "decider": "ZRN", "object_identity": "obj"}
-        result = self.codes(self.closeout(actions=[action], authorizations=[auth], source_mutation_count=1))
+        auth = {"id": "D", "state": "AUTHORIZED", "decider": "ACME-RELEASE-BOARD", "object_identity": "obj"}
+        result = self.codes(self.closeout(actions=[action], authorizations=[auth], source_mutation_count=1), authority_identity="ACME-RELEASE-BOARD")
         self.assertEqual("PASS", result["result"])
+
+    def test_mutation_authority_mismatch_holds(self):
+        action = {"id": "A", "executed": True, "mutates": True, "authorization_ref": "D", "object_identity": "obj"}
+        auth = {"id": "D", "state": "AUTHORIZED", "decider": "OTHER_AUTHORITY", "object_identity": "obj"}
+        result = self.codes(self.closeout(actions=[action], authorizations=[auth], source_mutation_count=1), authority_identity="PROJECT_AUTHORITY")
+        self.assertEqual("HOLD", result["result"])
+
+    def test_recorded_mutation_authority_cannot_replace_caller_expectation(self):
+        action = {"id": "A", "executed": True, "mutates": True, "authorization_ref": "D", "object_identity": "obj"}
+        auth = {"id": "D", "state": "AUTHORIZED", "decider": "PROJECT_AUTHORITY", "object_identity": "obj"}
+        result = self.codes(self.closeout(actions=[action], authorizations=[auth], source_mutation_count=1))
+        self.assertEqual("HOLD", result["result"])
 
     def test_source_integrity_unproven_rejected(self):
         result = self.codes(self.closeout(source_pre_post_match="NO"))

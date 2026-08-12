@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from .findings import finding, outcome, sort_findings
+from .identities import normalize_authority_identity
 from .io_utils import sha256_file
 from .models import ModuleResult, PredicateResult
 
@@ -16,9 +17,16 @@ SUPPORTED_STATES = TERMINAL_STATES | {"OPEN", "HOLD", "IN_PROGRESS"}
 PLANS = {"CREATE_NEW_ATOMICALLY", "IDEMPOTENT_NOOP", "DENY_CLOSED", "DENY_COLLISION", "DENY_PRECONDITION"}
 
 
-def _valid_reopen(state: dict[str, Any], proposed: dict[str, Any], executor: str, receipt: Any) -> bool:
+def _valid_reopen(
+    state: dict[str, Any],
+    proposed: dict[str, Any],
+    executor: str,
+    receipt: Any,
+    authority_identity: str | None,
+) -> bool:
     if not isinstance(receipt, dict):
         return False
+    expected_authority = normalize_authority_identity(authority_identity)
     required = {
         "current_terminal_hash": state.get("terminal_hash"),
         "new_attempt_identity": state.get("new_attempt_identity"),
@@ -26,9 +34,15 @@ def _valid_reopen(state: dict[str, Any], proposed: dict[str, Any], executor: str
         "authorized_executor": executor,
         "authorized_object": state.get("task_id"),
         "authorization_state": "AUTHORIZED",
-        "decider": "ZRN",
+        "decider": expected_authority,
     }
-    return all(receipt.get(key) == value and value not in {None, ""} for key, value in required.items())
+    if any(value is None or value == "" for value in required.values()):
+        return False
+    for key, expected in required.items():
+        actual = normalize_authority_identity(receipt.get(key)) if key == "decider" else receipt.get(key)
+        if actual != expected:
+            return False
+    return True
 
 
 def preflight(
@@ -36,6 +50,7 @@ def preflight(
     target_identity: str | Path | dict[str, Any],
     executor: str | None = None,
     reopen_receipt: Any = None,
+    authority_identity: str | None = None,
 ) -> ModuleResult:
     findings = []
     if not isinstance(task_state, dict):
@@ -82,12 +97,12 @@ def preflight(
         findings.append(finding("TG06_UNSUPPORTED_TERMINAL_STATE", "HOLD", "$", "terminal_state", "unsupported terminal state", state_name))
         allow_write, plan = False, "DENY_PRECONDITION"
 
-    exact_reopen = _valid_reopen(task_state, proposed, executor, reopen_receipt)
+    exact_reopen = _valid_reopen(task_state, proposed, executor, reopen_receipt, authority_identity)
     if state_name in TERMINAL_STATES and not exact_reopen:
         allow_write, plan = False, "DENY_CLOSED"
         findings.append(finding("TG01_TERMINAL_CLOSED", "HOLD", "$", "terminal_state", "terminal task cannot be reopened without an exact receipt", state_name))
         if reopen_receipt is not None:
-            findings.append(finding("TG04_REOPEN_RECEIPT_MISMATCH", "HOLD", "$", "reopen_receipt", "reopen receipt does not bind terminal, attempt, target, executor, object and ZRN authorization", {"terminal_hash": task_state.get("terminal_hash"), "attempt": task_state.get("new_attempt_identity"), "target_sha256": proposed_hash}))
+            findings.append(finding("TG04_REOPEN_RECEIPT_MISMATCH", "HOLD", "$", "reopen_receipt", "reopen receipt does not bind terminal, attempt, target, executor, object and expected-authority authorization", {"terminal_hash": task_state.get("terminal_hash"), "attempt": task_state.get("new_attempt_identity"), "target_sha256": proposed_hash, "expected_authority_supplied": bool(normalize_authority_identity(authority_identity))}))
 
     failed_predicates = [item for item in predicates if not item.passed]
     if failed_predicates:

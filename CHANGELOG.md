@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.0-recovery.3
+
+- Replaced the maintainer-specific authorization identity with an explicit,
+  caller-supplied expected authority for governance mutations, terminal
+  reopens, and closeout mutations. Validated documents cannot override that
+  out-of-band expectation.
+- Preserved fail-closed state, exact authority/object matching, evidence,
+  collision, and terminal-state predicates while allowing ordinary read-only
+  validation to run without an authority identity.
+- Added an English entry point for the preserved multilingual successor
+  evaluation contract and kept human/external scoring separate from
+  deterministic preparation.
+- Verified and documented standard installation in an isolated local virtual
+  environment and the `assurance` console entry point.
+
+This remains a full-functional recovery candidate. It is not independently
+reviewed, externally validated, production ready, or evidence of ecosystem
+adoption.
+
 ## 0.3.0-recovery.2
 
 - Restructured the public README around deterministic assurance and

@@ -15,18 +15,35 @@ decisions.
 ## Quick start
 
 FABLE5 requires Python 3.11 or newer and has no non-standard-library Python
-runtime dependencies. From a repository checkout, no installation is needed:
+runtime dependencies. Install it from a repository checkout in an isolated
+environment:
 
 ```sh
-PYTHONPATH=src python3 -m assurance_toolkit --version
-PYTHONPATH=src python3 -m assurance_toolkit --help
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install .
+assurance --version
+assurance --help
 ```
 
 Run a deterministic governance-pack check against the included fixture:
 
 ```sh
-PYTHONPATH=src python3 -m assurance_toolkit \
-  check fixtures/governance/valid-pack.json --format json
+assurance check fixtures/governance/valid-pack.json --format json
+```
+
+For authorization-bearing `check`, `guard`, and `closeout` inputs, the caller
+supplies the expected identity with `--authority-id <IDENTITY>`. Leading and
+trailing whitespace is ignored; the remaining identifier is compared exactly
+and case-sensitively. This is an out-of-band caller input; the document being
+validated cannot set or override it. Read-only validation does not require an
+authority ID.
+
+For repository-only development without installation, use:
+
+```sh
+PYTHONPATH=src python3 -m assurance_toolkit --version
+PYTHONPATH=src python3 -m assurance_toolkit --help
 ```
 
 Run the complete test suite:
@@ -110,8 +127,8 @@ production. Those decisions remain with people responsible for the project.
 ## Project status and provenance
 
 ```text
-PRODUCT_VERSION=0.3.0-recovery.2
-PYTHON_DISTRIBUTION_VERSION=0.3.0rc2
+PRODUCT_VERSION=0.3.0-recovery.3
+PYTHON_DISTRIBUTION_VERSION=0.3.0rc3
 STATUS=full-functional-recovery-candidate
 LINEAGE_ID=FABLE5-ASSURANCE-TOOLKIT-FULL-FUNCTIONAL-RECOVERY-20260713
 ```
@@ -122,12 +139,13 @@ and pilot requirements. It claims continuity of the accepted functional
 contract, not recovery of historical source bytes, commits, or tags. The
 `v0.3.0-recovery.1` tag identifies the first recovery candidate in the
 reconstructed lineage; `v0.3.0-recovery.2` records the subsequent public
-open-source surface hardening.
+open-source surface hardening; and `v0.3.0-recovery.3` generalizes the public
+authorization contract for external maintainers.
 
 The current status means the six modules and public interface have been
 reconstructed and mechanically tested. It does **not** claim independent
-review, user acceptance, external validation, canonical promotion,
-installation, production readiness, or ecosystem adoption. See
+review, user acceptance, external validation, canonical promotion, production
+readiness, or ecosystem adoption. See
 [status semantics](docs/STATUS_SEMANTICS.md) and
 [recovery lineage](docs/RECOVERY_LINEAGE.md) for the precise claims.
 

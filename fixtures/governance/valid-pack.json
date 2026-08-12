@@ -19,7 +19,7 @@
       "id": "DEC-001",
       "subject": "synthetic-object",
       "state": "AUTHORIZED",
-      "decider": "ZRN",
+      "decider": "PROJECT_AUTHORITY",
       "object_identity": "sha256:synthetic-object"
     }
   ],

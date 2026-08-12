@@ -28,14 +28,22 @@ class PublicCliTests(unittest.TestCase):
     def test_version(self):
         result = cli("--version")
         self.assertEqual(0, result.returncode)
-        self.assertIn("assurance 0.3.0-recovery.2", result.stdout)
-        self.assertIn("0.3.0rc2", result.stdout)
+        self.assertIn("assurance 0.3.0-recovery.3", result.stdout)
+        self.assertIn("0.3.0rc3", result.stdout)
 
     def test_help_lists_complete_surface(self):
         result = cli("--help")
         self.assertEqual(0, result.returncode)
         for command in ("classify", "check", "guard", "corpus", "handoff", "closeout", "eval", "pilot"):
             self.assertIn(command, result.stdout)
+
+    def test_authority_option_is_limited_to_dependent_commands(self):
+        for command in ("check", "guard", "closeout"):
+            with self.subTest(command=command):
+                self.assertIn("--authority-id", cli(command, "--help").stdout)
+        for command in ("classify", "handoff"):
+            with self.subTest(command=command):
+                self.assertNotIn("--authority-id", cli(command, "--help").stdout)
 
     def test_classify_file_json(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -70,6 +78,19 @@ class PublicCliTests(unittest.TestCase):
         self.assertEqual(0, result.returncode)
         self.assertEqual("PASS", json.loads(result.stdout)["result"])
 
+    def test_check_authority_is_supplied_out_of_band(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            pack = json.loads((REPOSITORY / "fixtures/governance/valid-pack.json").read_text(encoding="utf-8"))
+            pack["actions"][0].update({"executed": True, "mutates": True, "authorization_ref": "DEC-001"})
+            path = Path(temporary) / "pack.json"
+            path.write_text(json.dumps(pack), encoding="utf-8")
+            matched = cli("check", str(path), "--authority-id", "PROJECT_AUTHORITY", "--format", "json")
+            mismatched = cli("check", str(path), "--authority-id", "OTHER_AUTHORITY", "--format", "json")
+            omitted = cli("check", str(path), "--format", "json")
+            self.assertEqual(0, matched.returncode)
+            self.assertEqual(3, mismatched.returncode)
+            self.assertEqual(3, omitted.returncode)
+
     def test_check_stdin(self):
         pack = {"pack_version": "governance-pack/v1", "claims": [], "decisions": [], "actions": [], "task": {}}
         result = cli("check", "--stdin", "--format", "json", input_text=json.dumps(pack))
@@ -82,6 +103,29 @@ class PublicCliTests(unittest.TestCase):
             self.assertEqual(0, result.returncode)
             self.assertEqual("CREATE_NEW_ATOMICALLY", json.loads(result.stdout)["plan"])
             self.assertFalse(target.exists())
+
+    def test_guard_authority_option_validates_reopen_receipt(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = json.loads((REPOSITORY / "fixtures/terminal/open-task.json").read_text(encoding="utf-8"))
+            state["terminal_state"] = "CLOSED"
+            state_path = root / "state.json"
+            state_path.write_text(json.dumps(state), encoding="utf-8")
+            receipt = {
+                "current_terminal_hash": state["terminal_hash"],
+                "new_attempt_identity": state["new_attempt_identity"],
+                "proposed_target_sha256": state["target"]["proposed_sha256"],
+                "authorized_executor": "synthetic-executor",
+                "authorized_object": state["task_id"],
+                "authorization_state": "AUTHORIZED",
+                "decider": "alice@example.org",
+            }
+            receipt_path = root / "receipt.json"
+            receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+            target = root / "new-target"
+            result = cli("guard", str(state_path), str(target), "--executor", "synthetic-executor", "--reopen", str(receipt_path), "--authority-id", "alice@example.org", "--format", "json")
+            self.assertEqual(0, result.returncode)
+            self.assertEqual("CREATE_NEW_ATOMICALLY", json.loads(result.stdout)["plan"])
 
     def test_corpus_freeze_verify_public_cli(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -103,6 +147,18 @@ class PublicCliTests(unittest.TestCase):
         result = cli("closeout", "fixtures/closeout/valid-closeout.json", "--format", "json")
         self.assertEqual(0, result.returncode)
         self.assertEqual("PASS", json.loads(result.stdout)["result"])
+
+    def test_closeout_authority_option_validates_mutation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            document = json.loads((REPOSITORY / "fixtures/closeout/valid-closeout.json").read_text(encoding="utf-8"))
+            document["actions"] = [{"id": "A", "executed": True, "mutates": True, "authorization_ref": "D", "object_identity": "obj"}]
+            document["authorizations"] = [{"id": "D", "state": "AUTHORIZED", "decider": "ACME-RELEASE-BOARD", "object_identity": "obj"}]
+            document["source_mutation_count"] = 1
+            path = Path(temporary) / "closeout.json"
+            path.write_text(json.dumps(document), encoding="utf-8")
+            result = cli("closeout", str(path), "--authority-id", "ACME-RELEASE-BOARD", "--format", "json")
+            self.assertEqual(0, result.returncode)
+            self.assertEqual("PASS", json.loads(result.stdout)["result"])
 
     def test_eval_prepare_public_cli(self):
         with tempfile.TemporaryDirectory() as temporary:

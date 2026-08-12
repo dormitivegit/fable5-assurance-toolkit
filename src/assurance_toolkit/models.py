@@ -33,7 +33,7 @@ class PredicateResult:
 class ModuleResult:
     result: str
     module_id: str
-    module_version: str = "0.3.0-recovery.2"
+    module_version: str = "0.3.0-recovery.3"
     rule_set_version: str = "recovery-1"
     profile: str = "normal"
     findings: list[Finding] = field(default_factory=list)

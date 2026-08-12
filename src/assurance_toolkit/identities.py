@@ -10,6 +10,12 @@ from typing import Any
 from .io_utils import sha256_bytes, sha256_file
 
 
+def normalize_authority_identity(value: Any) -> str:
+    """Normalize an opaque authority identifier without changing its case."""
+
+    return value.strip() if isinstance(value, str) else ""
+
+
 def file_identity(path: os.PathLike[str] | str) -> dict[str, Any]:
     item = Path(path)
     st = item.lstat()

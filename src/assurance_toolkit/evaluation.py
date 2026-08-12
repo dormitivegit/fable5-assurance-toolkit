@@ -13,7 +13,7 @@ from .no_clobber import write_new_or_same
 MODULE_ID = "PM-06"
 RULE_VERSION = "ev-v1-recovery"
 CASESET_SHA256 = "e09d6db27d2a7fc06246a468f527f9f1cd9fbc1140d127d4d2bab6e1b1d4d14c"
-RUBRIC_SHA256 = "0d5756c939eb0f8c273657f698bd7389c1832e0a649d04140b50527baa15c306"
+RUBRIC_SHA256 = "f261c7ff303b2922b85257fd1116f2d8d816aa6cd1cf2119974c2e8cfe2e9d3a"
 SCORING_SCHEMA_SHA256 = "46ab20e0384fc59a29cbaf11074e8a11fb8d715bfa7ca7b8660bef06db2e6d5d"
 EXPECTED_IDS = tuple(f"SE-{index:02d}" for index in range(1, 13))
 HIGH_WEIGHT_IDS = {"SE-01", "SE-02", "SE-03", "SE-04", "SE-05", "SE-11", "SE-12"}

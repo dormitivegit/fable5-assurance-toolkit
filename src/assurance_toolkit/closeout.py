@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .findings import finding, outcome, sort_findings
+from .identities import normalize_authority_identity
 from .io_utils import read_json
 from .models import ModuleResult
 
@@ -16,8 +17,14 @@ FINAL_RESULT = re.compile(r"^(PASS|FAIL|HOLD)_[A-Z0-9_]+$")
 TERMINAL_STATES = {"CLOSED", "ACCEPTED", "RETIRED", "HOLD", "OPEN"}
 
 
-def validate_closeout(path: str | Path, profile: str = "normal", guard_receipt: str | Path | dict[str, Any] | None = None) -> ModuleResult:
+def validate_closeout(
+    path: str | Path,
+    profile: str = "normal",
+    guard_receipt: str | Path | dict[str, Any] | None = None,
+    authority_identity: str | None = None,
+) -> ModuleResult:
     findings = []
+    expected_authority = normalize_authority_identity(authority_identity)
     try:
         document = read_json(path)
     except (OSError, UnicodeError, ValueError) as exc:
@@ -48,8 +55,9 @@ def validate_closeout(path: str | Path, profile: str = "normal", guard_receipt: 
         if not isinstance(action, dict) or not action.get("executed") or not action.get("mutates"):
             continue
         auth = authorizations.get(action.get("authorization_ref"))
-        if not auth or auth.get("state") != "AUTHORIZED" or auth.get("decider") != "ZRN" or auth.get("object_identity") != action.get("object_identity"):
-            findings.append(finding("HC22_MUTATION_MISMATCH", "HOLD", str(path), f"actions[{index}]", "mutation does not reconcile to exact ZRN authorization", action.get("authorization_ref")))
+        decider = normalize_authority_identity((auth or {}).get("decider"))
+        if not auth or auth.get("state") != "AUTHORIZED" or not expected_authority or decider != expected_authority or auth.get("object_identity") != action.get("object_identity"):
+            findings.append(finding("HC22_MUTATION_MISMATCH", "HOLD", str(path), f"actions[{index}]", "mutation does not reconcile to exact expected-authority authorization", {"authorization_ref": action.get("authorization_ref"), "authorization_resolved": auth is not None, "expected_authority_supplied": bool(expected_authority), "authority_matches": bool(expected_authority and decider == expected_authority), "object_matches": bool(auth and auth.get("object_identity") == action.get("object_identity"))}))
     if document.get("source_pre_post_match") != "YES":
         findings.append(finding("HC23_SOURCE_INTEGRITY_UNPROVEN", "ERROR", str(path), "source_pre_post_match", "source pre/post identity is not proven", document.get("source_pre_post_match")))
     if document.get("output_self_ingestion_count") != 0:

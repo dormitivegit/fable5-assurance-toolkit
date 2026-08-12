@@ -92,6 +92,7 @@ def build_parser() -> argparse.ArgumentParser:
     check_parser.add_argument("path", nargs="?")
     check_parser.add_argument("--stdin", action="store_true")
     check_parser.add_argument("--tier", choices=("T0", "T1", "T2", "T3", "T4"))
+    check_parser.add_argument("--authority-id", metavar="IDENTITY", help="caller-supplied expected authority identity")
     check_parser.add_argument("--profile", choices=("normal", "strict"), default="normal")
     check_parser.add_argument("--format", choices=("text", "json"), default="text")
 
@@ -100,6 +101,7 @@ def build_parser() -> argparse.ArgumentParser:
     guard_parser.add_argument("target")
     guard_parser.add_argument("--executor")
     guard_parser.add_argument("--reopen")
+    guard_parser.add_argument("--authority-id", metavar="IDENTITY", help="caller-supplied expected authority identity")
     guard_parser.add_argument("--format", choices=("text", "json"), default="text")
 
     corpus_parser = commands.add_parser("corpus", help="freeze or verify a bounded corpus")
@@ -124,6 +126,7 @@ def build_parser() -> argparse.ArgumentParser:
     closeout_parser.add_argument("file")
     closeout_parser.add_argument("--profile", choices=("normal", "strict"), default="normal")
     closeout_parser.add_argument("--guard-receipt")
+    closeout_parser.add_argument("--authority-id", metavar="IDENTITY", help="caller-supplied expected authority identity")
     closeout_parser.add_argument("--format", choices=("text", "json"), default="text")
 
     eval_parser = commands.add_parser("eval", help="prepare or score the preserved successor evaluation")
@@ -164,13 +167,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "classify":
             payload = classify(_input(args.path, args.stdin), args.profile).to_dict()
         elif args.command == "check":
-            payload = check(_input(args.path, args.stdin), args.profile).to_dict()
+            payload = check(_input(args.path, args.stdin), args.profile, authority_identity=args.authority_id).to_dict()
             if args.tier:
                 payload["supplied_tier"] = args.tier
         elif args.command == "guard":
             state = read_json(args.task_state)
             receipt = read_json(args.reopen) if args.reopen else None
-            payload = preflight(state, args.target, args.executor, receipt).to_dict()
+            payload = preflight(state, args.target, args.executor, receipt, authority_identity=args.authority_id).to_dict()
         elif args.command == "corpus" and args.corpus_command == "freeze":
             payload = freeze(args.roots, args.exclude, args.manifest).to_dict()
         elif args.command == "corpus" and args.corpus_command == "verify":
@@ -178,7 +181,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "handoff":
             payload = validate_handoff(args.file, args.carrier, args.profile).to_dict()
         elif args.command == "closeout":
-            payload = validate_closeout(args.file, args.profile, args.guard_receipt).to_dict()
+            payload = validate_closeout(args.file, args.profile, args.guard_receipt, authority_identity=args.authority_id).to_dict()
         elif args.command == "eval" and args.eval_command == "prepare":
             payload = prepare(args.case_set, args.out).to_dict()
         elif args.command == "eval" and args.eval_command == "score":

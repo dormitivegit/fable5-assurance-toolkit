@@ -22,11 +22,11 @@ publishes no guaranteed response or remediation SLA.
 
 ## Current security-support status
 
-FABLE5 `0.3.0-recovery.2` has
+FABLE5 `0.3.0-recovery.3` has
 `STATUS=full-functional-recovery-candidate`. Its implemented public interface
 has mechanical test coverage, but the candidate is not independently reviewed,
-user accepted, externally validated, canonical, installed, or production
-ready. Reports concerning the current `main` branch and the recovery candidate
+user accepted, externally validated, canonical, deployed, or production ready.
+Reports concerning the current `main` branch and the recovery candidate
 are welcome, but this status must not be interpreted as a production-support
 commitment.
 

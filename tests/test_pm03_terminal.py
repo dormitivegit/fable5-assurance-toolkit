@@ -9,6 +9,9 @@ from assurance_toolkit.io_utils import sha256_bytes
 from assurance_toolkit.terminal import preflight
 
 
+DEFAULT_AUTHORITY = "PROJECT_AUTHORITY"
+
+
 class TerminalFixtureMixin:
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -42,7 +45,7 @@ class TerminalFixtureMixin:
             "authorized_executor": "writer-1",
             "authorized_object": "task-1",
             "authorization_state": "AUTHORIZED",
-            "decider": "ZRN",
+            "decider": DEFAULT_AUTHORITY,
         }
         value.update(updates)
         return value
@@ -61,8 +64,17 @@ class TerminalGuardTests(TerminalFixtureMixin, unittest.TestCase):
         self.assertFalse(self.target.exists())
 
     def test_closed_valid_reopen_passes(self):
-        result = preflight(self.state(terminal_state="CLOSED"), self.target, "writer-1", self.receipt()).to_dict()
+        result = preflight(self.state(terminal_state="CLOSED"), self.target, "writer-1", self.receipt(), authority_identity=DEFAULT_AUTHORITY).to_dict()
         self.assertEqual("CREATE_NEW_ATOMICALLY", result["plan"])
+
+    def test_reopen_receipt_requires_out_of_band_authority(self):
+        result = preflight(self.state(terminal_state="CLOSED"), self.target, "writer-1", self.receipt()).to_dict()
+        self.assertEqual("DENY_CLOSED", result["plan"])
+        self.assertIn("TG04_REOPEN_RECEIPT_MISMATCH", [item["code"] for item in result["findings"]])
+
+    def test_reopen_receipt_authority_mismatch_holds(self):
+        result = preflight(self.state(terminal_state="CLOSED"), self.target, "writer-1", self.receipt(), authority_identity="OTHER_AUTHORITY").to_dict()
+        self.assertEqual("DENY_CLOSED", result["plan"])
 
     def test_same_hash_is_untouched_noop(self):
         self.target.write_bytes(self.data)
@@ -133,7 +145,7 @@ RECEIPT_MISMATCHES = (
 
 def make_receipt_mismatch_test(updates):
     def test(self):
-        result = preflight(self.state(terminal_state="CLOSED"), self.target, "writer-1", self.receipt(**updates)).to_dict()
+        result = preflight(self.state(terminal_state="CLOSED"), self.target, "writer-1", self.receipt(**updates), authority_identity=DEFAULT_AUTHORITY).to_dict()
         codes = [item["code"] for item in result["findings"]]
         self.assertEqual("DENY_CLOSED", result["plan"])
         self.assertIn("TG04_REOPEN_RECEIPT_MISMATCH", codes)

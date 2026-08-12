@@ -9,6 +9,10 @@ from assurance_toolkit.governance import check
 from assurance_toolkit.io_utils import sha256_bytes, sha256_file
 
 
+DEFAULT_AUTHORITY = "PROJECT_AUTHORITY"
+AUTHORITY_IDENTITIES = (DEFAULT_AUTHORITY, "alice@example.org", "ACME-RELEASE-BOARD")
+
+
 class GovernanceTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -19,7 +23,7 @@ class GovernanceTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def pack(self):
+    def pack(self, authority_identity=DEFAULT_AUTHORITY):
         return {
             "pack_version": "governance-pack/v1",
             "claims": [{
@@ -30,7 +34,7 @@ class GovernanceTests(unittest.TestCase):
             }],
             "decisions": [{
                 "id": "D1", "subject": "object-a", "state": "AUTHORIZED",
-                "decider": "ZRN", "object_identity": "object-a@sha256",
+                "decider": authority_identity, "object_identity": "object-a@sha256",
             }],
             "actions": [{
                 "id": "A1", "executed": True, "mutates": True,
@@ -41,30 +45,52 @@ class GovernanceTests(unittest.TestCase):
         }
 
     def assert_code(self, pack, code, profile="normal"):
-        result = check(pack, profile).to_dict()
+        result = check(pack, profile, authority_identity=DEFAULT_AUTHORITY).to_dict()
         self.assertIn(code, [item["code"] for item in result["findings"]])
         self.assertNotEqual("PASS", result["result"])
 
     def test_valid_pack_passes(self):
-        result = check(self.pack()).to_dict()
+        for authority_identity in AUTHORITY_IDENTITIES:
+            with self.subTest(authority_identity=authority_identity):
+                result = check(self.pack(authority_identity), authority_identity=authority_identity).to_dict()
+                self.assertEqual("PASS", result["result"])
+                self.assertEqual(0, result["exit_code"])
+
+    def test_authorization_bearing_pack_requires_out_of_band_authority(self):
+        pack = self.pack()
+        pack["authority_identity"] = DEFAULT_AUTHORITY
+        result = check(pack).to_dict()
+        self.assertEqual("HOLD", result["result"])
+        self.assertIn("GP03_UNAUTHORIZED_ACTION", [item["code"] for item in result["findings"]])
+
+    def test_read_only_pack_does_not_require_authority(self):
+        pack = self.pack()
+        pack["actions"] = []
+        self.assertEqual("PASS", check(pack).to_dict()["result"])
+
+    def test_authority_identity_comparison_is_case_sensitive(self):
+        result = check(self.pack("project_authority"), authority_identity=DEFAULT_AUTHORITY).to_dict()
+        self.assertEqual("HOLD", result["result"])
+
+    def test_authority_identity_trims_only_surrounding_whitespace(self):
+        result = check(self.pack(f"  {DEFAULT_AUTHORITY}  "), authority_identity=f" {DEFAULT_AUTHORITY} ").to_dict()
         self.assertEqual("PASS", result["result"])
-        self.assertEqual(0, result["exit_code"])
 
     def test_input_is_not_mutated(self):
         pack = self.pack()
         before = copy.deepcopy(pack)
-        check(pack)
+        check(pack, authority_identity=DEFAULT_AUTHORITY)
         self.assertEqual(before, pack)
 
     def test_results_are_deterministic(self):
         pack = self.pack()
         pack["claims"][0]["verification"] = "UNVERIFIED"
-        first = json.dumps(check(pack).to_dict(), ensure_ascii=False)
-        second = json.dumps(check(pack).to_dict(), ensure_ascii=False)
+        first = json.dumps(check(pack, authority_identity=DEFAULT_AUTHORITY).to_dict(), ensure_ascii=False)
+        second = json.dumps(check(pack, authority_identity=DEFAULT_AUTHORITY).to_dict(), ensure_ascii=False)
         self.assertEqual(first, second)
 
     def test_business_truth_not_adjudicated(self):
-        result = check(self.pack()).to_dict()
+        result = check(self.pack(), authority_identity=DEFAULT_AUTHORITY).to_dict()
         self.assertIn({"business_truth_adjudicated": False}, result["facts"])
 
     def test_exact_json_pointer_source_passes(self):
@@ -73,7 +99,7 @@ class GovernanceTests(unittest.TestCase):
         pack = self.pack()
         pack["claims"][0]["source_identity"] = {"path": str(source), "sha256": sha256_file(source)}
         pack["claims"][0]["location"] = {"json_pointer": "/nested/value", "expected": "ok"}
-        self.assertEqual("PASS", check(pack).to_dict()["result"])
+        self.assertEqual("PASS", check(pack, authority_identity=DEFAULT_AUTHORITY).to_dict()["result"])
 
     def test_exact_zip_member_source_passes(self):
         archive = self.root / "evidence.zip"
@@ -82,12 +108,12 @@ class GovernanceTests(unittest.TestCase):
         pack = self.pack()
         pack["claims"][0]["source_identity"] = {"path": str(archive), "archive_member": "member.txt", "sha256": sha256_bytes(b"member anchor")}
         pack["claims"][0]["location"] = "member anchor"
-        self.assertEqual("PASS", check(pack).to_dict()["result"])
+        self.assertEqual("PASS", check(pack, authority_identity=DEFAULT_AUTHORITY).to_dict()["result"])
 
     def test_finding_schema_complete(self):
         pack = self.pack()
         pack["claims"][0].pop("source_identity")
-        item = check(pack).to_dict()["findings"][0]
+        item = check(pack, authority_identity=DEFAULT_AUTHORITY).to_dict()["findings"][0]
         self.assertEqual({"code", "severity", "path", "location", "message", "rule_version", "evidence"}, set(item))
 
 
@@ -133,7 +159,7 @@ def _mutation(name):
         elif name == "accepted_not_authorization":
             decision["state"] = "ACCEPTED"
         elif name == "live_conflict":
-            pack["decisions"].append({"id": "D2", "subject": "object-a", "state": "NOT_AUTHORIZED", "decider": "ZRN", "object_identity": "object-a@sha256"})
+            pack["decisions"].append({"id": "D2", "subject": "object-a", "state": "NOT_AUTHORIZED", "decider": DEFAULT_AUTHORITY, "object_identity": "object-a@sha256"})
         elif name == "false_pass":
             claim["verification"] = "UNVERIFIED"
         elif name == "unsupported_version":

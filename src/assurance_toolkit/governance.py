@@ -6,6 +6,7 @@ from collections import defaultdict
 from typing import Any
 
 from .findings import finding, outcome, sort_findings
+from .identities import normalize_authority_identity
 from .io_utils import exact_source_resolves
 from .models import ModuleResult
 
@@ -28,8 +29,14 @@ def _action_id(action: dict[str, Any], index: int) -> str:
     return str(action.get("id") or action.get("action_id") or f"action[{index}]")
 
 
-def check(pack: Any, profile: str = "normal", source_resolver=exact_source_resolves) -> ModuleResult:
+def check(
+    pack: Any,
+    profile: str = "normal",
+    source_resolver=exact_source_resolves,
+    authority_identity: str | None = None,
+) -> ModuleResult:
     findings = []
+    expected_authority = normalize_authority_identity(authority_identity)
     if profile not in {"normal", "strict"}:
         findings.append(finding("IN02_UNSUPPORTED_VERSION", "ERROR", "$", "profile", "unsupported profile", profile))
         profile = "normal"
@@ -113,12 +120,12 @@ def check(pack: Any, profile: str = "normal", source_resolver=exact_source_resol
             ref = action.get("authorization_ref")
             decision = decision_by_id.get(str(ref)) if ref is not None else None
             state = str((decision or {}).get("state", "")).upper()
-            decider = str((decision or {}).get("decider") or (decision or {}).get("decided_by") or "").upper()
+            decider = normalize_authority_identity((decision or {}).get("decider") or (decision or {}).get("decided_by"))
             authorized_object = (decision or {}).get("object_identity")
             action_object = action.get("object_identity")
-            if decision is None or state not in AUTH_STATES or decider != "ZRN" or not action_object or authorized_object != action_object:
+            if decision is None or state not in AUTH_STATES or not expected_authority or decider != expected_authority or not action_object or authorized_object != action_object:
                 load_bearing_problem = True
-                findings.append(finding("GP03_UNAUTHORIZED_ACTION", "HOLD", aid, "authorization_ref", "executed mutation lacks exact ZRN authorization bound to the same object", {"authorization_resolved": decision is not None, "state": state, "decider": decider, "object_matches": bool(action_object and authorized_object == action_object)}))
+                findings.append(finding("GP03_UNAUTHORIZED_ACTION", "HOLD", aid, "authorization_ref", "executed mutation lacks exact expected-authority authorization bound to the same object", {"authorization_resolved": decision is not None, "state": state, "decider": decider, "expected_authority_supplied": bool(expected_authority), "authority_matches": bool(expected_authority and decider == expected_authority), "object_matches": bool(action_object and authorized_object == action_object)}))
 
     declared_result = str(pack.get("result") or task.get("result") or "")
     if declared_result.startswith("PASS") and load_bearing_problem:

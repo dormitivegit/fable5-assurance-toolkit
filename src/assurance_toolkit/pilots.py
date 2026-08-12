@@ -352,9 +352,9 @@ def pilot_c1(root: Path) -> dict[str, Any]:
     traps.append({"name": "closed_without_reopen", "blocked": preflight(closed, root / "new.json", "pilot-c1").to_dict()["plan"] == "DENY_CLOSED"})
     wrong_receipt = {
         "current_terminal_hash": "b" * 64, "new_attempt_identity": "attempt-2", "proposed_target_sha256": sha256_bytes(b"proposed"),
-        "authorized_executor": "pilot-c1", "authorized_object": "pilot-c1", "authorization_state": "AUTHORIZED", "decider": "ZRN",
+        "authorized_executor": "pilot-c1", "authorized_object": "pilot-c1", "authorization_state": "AUTHORIZED", "decider": "PROJECT_AUTHORITY",
     }
-    traps.append({"name": "wrong_stale_reopen_identity", "blocked": preflight(closed, root / "new.json", "pilot-c1", wrong_receipt).to_dict()["plan"] == "DENY_CLOSED"})
+    traps.append({"name": "wrong_stale_reopen_identity", "blocked": preflight(closed, root / "new.json", "pilot-c1", wrong_receipt, authority_identity="PROJECT_AUTHORITY").to_dict()["plan"] == "DENY_CLOSED"})
     traps.append({"name": "target_collision", "blocked": preflight(base, target, "pilot-c1").to_dict()["plan"] == "DENY_COLLISION"})
     corpus_result = verify(self_manifest).to_dict()
     traps.append({"name": "self_ingestion_or_root_escape", "blocked": any(item["code"] == "CI05_SELF_INGESTED" for item in corpus_result["findings"]), "mode": "read-only malformed baseline trap"})

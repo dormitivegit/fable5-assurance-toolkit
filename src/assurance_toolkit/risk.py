@@ -49,7 +49,7 @@ CONTROLS = {
         "exact_object_allowlist",
         "preserve_before_mutation",
         "close_all_preconditions",
-        "object_bound_zrn_authorization",
+        "object_bound_authority_approval",
         "single_writer",
         "independent_review",
         "closeout",
@@ -58,7 +58,7 @@ CONTROLS = {
         "freeze_corpus",
         "bind_old_and_new_identities",
         "independent_review",
-        "zrn_own_voice_object_bound_approval",
+        "authority_object_bound_approval",
         "append_only_supersession",
     ],
 }
