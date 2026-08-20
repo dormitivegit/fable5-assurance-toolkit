@@ -87,10 +87,23 @@ particular, parse-failure JSON uses the command string as `module_id` and
 | 4 | integrity-family HOLD |
 | 5 | terminal/target-family HOLD |
 
-For structured module outcomes, precedence is
+For structured module outcomes, finding severity first determines whether the
+outcome is blocking: `ERROR` and `HOLD` block, while `WARN` and `INFO` do not
+block under the normal profile. `--profile strict` can promote `WARN` to
+effective blocking for the final decision without changing the serialized
+finding's severity label. A non-blocking finding does not select a nonzero exit
+solely because its prefix belongs to an exit family.
+
+For effectively blocking module outcomes, PM-03 normally applies the
+terminal-family exit floor/pin and PM-04 normally applies the integrity-family
+exit floor/pin, subject to explicit decision exceptions published in the
+normative CLI contract. This module-selected effective exit family is distinct
+from the family suggested by an individual finding prefix. After severity,
+profile promotion, any module floor/pin, and any exact exception are resolved,
+precedence remains
 `terminal(5) > integrity(4) > HOLD-severity(3) > input-class(2) > generic(1)`.
-An `IN*` finding therefore does not force exit 2 when a higher-precedence
-family co-occurs.
+The table above is a summary; consumers that need exact decision behavior must
+use the normative JSON contract.
 
 This build publishes the current output/exit contract, not the complete
 current-generation input contract needed to reauthor every preserved A1 case.

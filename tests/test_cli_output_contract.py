@@ -43,6 +43,40 @@ class CliOutputContractTests(unittest.TestCase):
                 return int(code)
         self.fail(f"exit class absent from published contract: {classification}")
 
+    def f1_semantics(self, name):
+        exit_semantics = self.contract["exit_semantics"]
+        self.assertIn(
+            name,
+            exit_semantics,
+            f"F-1 contract omission: exit_semantics.{name} is required",
+        )
+        return exit_semantics[name]
+
+    def pm04_malformed_accepted_sha_exception(self):
+        expected_match = {
+            "module_id": "PM-04",
+            "finding_count": 1,
+            "finding": {
+                "code": "IN01_PARSE_ERROR",
+                "location": "accepted_manifest_sha256",
+                "severity": "ERROR",
+            },
+        }
+        exceptions = self.f1_semantics("exact_decision_exceptions")
+        matches = [item for item in exceptions if item.get("match") == expected_match]
+        self.assertEqual(
+            1,
+            len(matches),
+            "F-1 contract omission: exact PM-04 malformed accepted-SHA exception is required",
+        )
+        exception = matches[0]
+        self.assertEqual(
+            "EXACT_EXCEPTION_OVERRIDES_MODULE_FAMILY_FLOOR",
+            exception["precedence"],
+        )
+        self.assertFalse(exception["decision"]["module_family_floor_applies"])
+        return exception
+
     def assert_not_json(self, text):
         with self.assertRaises((json.JSONDecodeError, TypeError)):
             json.loads(text)
@@ -78,7 +112,11 @@ class CliOutputContractTests(unittest.TestCase):
         return payload
 
     def test_contract_identity_structure_and_deterministic_encoding(self):
-        self.assertEqual("cli-output-contract/v1", self.contract["schema_version"])
+        self.assertEqual("cli-output-contract/v2", self.contract["schema_version"])
+        self.assertEqual(
+            "FABLE5_CLI_OUTPUT_AND_EXIT_CONTRACT_20260820",
+            self.contract["contract_id"],
+        )
         self.assertTrue(self.contract["normative"])
         self.assertEqual(
             "PUBLISHED_CONTRACT_TO_TEST_EXPECTATION_TO_ACTUAL_CLI_OUTPUT",
@@ -98,6 +136,213 @@ class CliOutputContractTests(unittest.TestCase):
         self.assertEqual(
             self.contract_text,
             json.dumps(self.contract, ensure_ascii=False, indent=2) + "\n",
+        )
+
+    def test_f1_decision_semantics_structure_is_complete(self):
+        decision_order = self.f1_semantics("decision_order")
+        severity = self.f1_semantics("severity_semantics")
+        profiles = self.f1_semantics("profile_semantics")
+        family_floor = self.f1_semantics("family_floor")
+
+        self.assertEqual(
+            [
+                "severity_effective_blocking",
+                "profile_promotion",
+                "module_family_floor",
+                "exact_decision_exception_override",
+                "structured_precedence_high_to_low",
+            ],
+            decision_order,
+        )
+        self.assertEqual({"ERROR", "HOLD"}, set(severity["blocking_severities"]))
+        self.assertEqual({"WARN", "INFO"}, set(severity["non_blocking_severities"]))
+        self.assertEqual("normal", profiles["default_profile"])
+        self.assertEqual([], profiles["normal"]["promotes_to_effective_blocking"])
+        self.assertEqual(["WARN"], profiles["strict"]["promotes_to_effective_blocking"])
+        self.assertTrue(profiles["strict"]["serialized_severity_labels_unchanged"])
+        self.assertTrue(family_floor["applies_only_to_effectively_blocking_outcomes"])
+        self.assertTrue(
+            family_floor[
+                "finding_prefix_family_distinct_from_module_selected_effective_exit_family"
+            ]
+        )
+        self.assertEqual(
+            {
+                "PM-03": {"effective_exit_family": "terminal", "exit_floor": 5},
+                "PM-04": {"effective_exit_family": "integrity", "exit_floor": 4},
+            },
+            family_floor["modules"],
+        )
+
+    def test_t1_normal_pm04_warn_is_non_blocking_exit_zero(self):
+        severity = self.f1_semantics("severity_semantics")
+        profiles = self.f1_semantics("profile_semantics")
+        family_floor = self.f1_semantics("family_floor")
+        self.assertIn("WARN", severity["non_blocking_severities"])
+        self.assertNotIn("WARN", profiles["normal"]["promotes_to_effective_blocking"])
+        self.assertTrue(family_floor["applies_only_to_effectively_blocking_outcomes"])
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "source"
+            root.mkdir()
+            (root / "frozen.txt").write_text("frozen", encoding="utf-8")
+            manifest = Path(temporary) / "manifest.jsonl"
+            frozen = cli(
+                "corpus", "freeze", str(root),
+                "--manifest", str(manifest), "--format", "json",
+            )
+            self.assertEqual(self.exit_for("success"), frozen.returncode)
+            (root / "new.txt").write_text("new", encoding="utf-8")
+            completed = cli(
+                "corpus", "verify", str(manifest),
+                "--detect-new", "--format", "json",
+            )
+
+        payload = self.assert_module_result(completed, "corpus_verify")
+        self.assertEqual("PM-04", payload["module_id"])
+        self.assertEqual("normal", payload["profile"])
+        self.assertEqual("PASS", payload["result"])
+        self.assertEqual(self.exit_for("success"), completed.returncode)
+        self.assertEqual(
+            [("CI10_NEW_SOURCE_DETECTED", "WARN")],
+            [(item["code"], item["severity"]) for item in payload["findings"]],
+        )
+
+    def test_t2_strict_promotes_warn_without_relabeling_finding(self):
+        severity = self.f1_semantics("severity_semantics")
+        profiles = self.f1_semantics("profile_semantics")
+        self.assertIn("WARN", severity["non_blocking_severities"])
+        self.assertEqual(["WARN"], profiles["strict"]["promotes_to_effective_blocking"])
+        self.assertTrue(profiles["strict"]["serialized_severity_labels_unchanged"])
+
+        with tempfile.TemporaryDirectory() as temporary:
+            handoff = json.loads(
+                (REPOSITORY / "fixtures" / "handoff" / "valid-observation.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            handoff["dimensions"]["development"] = False
+            path = Path(temporary) / "warn-only-handoff.json"
+            path.write_text(json.dumps(handoff), encoding="utf-8")
+            normal = cli(
+                "handoff", str(path), "--carrier", "direct-v1-ax1-ax2",
+                "--profile", "normal", "--format", "json",
+            )
+            strict = cli(
+                "handoff", str(path), "--carrier", "direct-v1-ax1-ax2",
+                "--profile", "strict", "--format", "json",
+            )
+
+        normal_payload = self.assert_module_result(normal, "handoff")
+        strict_payload = self.assert_module_result(strict, "handoff")
+        self.assertEqual(normal_payload["findings"], strict_payload["findings"])
+        self.assertEqual(
+            [("HC02_MATERIAL_DIMENSION_ABSENT", "WARN")],
+            [(item["code"], item["severity"]) for item in normal_payload["findings"]],
+        )
+        self.assertEqual(("PASS", self.exit_for("success")), (normal_payload["result"], normal.returncode))
+        self.assertEqual(("FAIL", self.exit_for("generic_fail")), (strict_payload["result"], strict.returncode))
+
+    def test_t3_pm04_blocking_input_uses_integrity_family_floor(self):
+        family_floor = self.f1_semantics("family_floor")
+        self.assertEqual(
+            {"effective_exit_family": "integrity", "exit_floor": 4},
+            family_floor["modules"]["PM-04"],
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "source"
+            root.mkdir()
+            (root / "source.txt").write_text("source", encoding="utf-8")
+            manifest = Path(temporary) / "manifest.jsonl"
+            frozen = cli(
+                "corpus", "freeze", str(root),
+                "--manifest", str(manifest), "--format", "json",
+            )
+            self.assertEqual(self.exit_for("success"), frozen.returncode)
+            lines = manifest.read_text(encoding="utf-8").splitlines()
+            header = json.loads(lines[0])
+            header["rule_version"] = "unsupported-f1-test"
+            lines[0] = json.dumps(header, sort_keys=True, separators=(",", ":"))
+            manifest.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            completed = cli("corpus", "verify", str(manifest), "--format", "json")
+
+        payload = self.assert_module_result(completed, "corpus_verify")
+        self.assertEqual("HOLD", payload["result"])
+        self.assertEqual(self.exit_for("integrity_hold"), completed.returncode)
+        self.assertEqual(
+            [("IN02_UNSUPPORTED_VERSION", "ERROR")],
+            [(item["code"], item["severity"]) for item in payload["findings"]],
+        )
+
+    def test_pm04_malformed_accepted_sha_exception_binds_contract_to_live_cli(self):
+        exception = self.pm04_malformed_accepted_sha_exception()
+        expected_result = exception["decision"]["result"]
+        expected_exit = self.exit_for(exception["decision"]["effective_exit_class"])
+        expected_finding = exception["match"]["finding"]
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "source"
+            root.mkdir()
+            (root / "source.txt").write_text("source", encoding="utf-8")
+            manifest = Path(temporary) / "manifest.jsonl"
+            frozen = cli(
+                "corpus", "freeze", str(root),
+                "--manifest", str(manifest), "--format", "json",
+            )
+            self.assertEqual(self.exit_for("success"), frozen.returncode)
+            completed = cli(
+                "corpus", "verify", str(manifest),
+                "--accepted-manifest-sha256", "zz", "--format", "json",
+            )
+
+        payload = self.assert_module_result(completed, "corpus_verify")
+        self.assertEqual(exception["match"]["module_id"], payload["module_id"])
+        self.assertEqual(exception["match"]["finding_count"], len(payload["findings"]))
+        for name in ("code", "location", "severity"):
+            self.assertEqual(expected_finding[name], payload["findings"][0][name])
+        self.assertEqual(expected_result, payload["result"])
+        self.assertEqual(expected_exit, payload["exit_code"])
+        self.assertEqual(expected_exit, completed.returncode)
+
+    def test_t4_pm01_blocking_input_control_is_unpinned_exit_two(self):
+        family_floor = self.f1_semantics("family_floor")
+        self.assertNotIn("PM-01", family_floor["modules"])
+
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "unsupported.json"
+            path.write_text(
+                json.dumps({"schema_version": "risk-descriptor/v99"}),
+                encoding="utf-8",
+            )
+            completed = cli("classify", str(path), "--format", "json")
+
+        payload = self.assert_module_result(completed, "classify")
+        self.assertEqual("FAIL", payload["result"])
+        self.assertEqual(self.exit_for("input_or_invocation_fail"), completed.returncode)
+        self.assertIn("IN02_UNSUPPORTED_VERSION", [item["code"] for item in payload["findings"]])
+
+    def test_t5_pm03_blocking_input_uses_terminal_family_floor(self):
+        family_floor = self.f1_semantics("family_floor")
+        self.assertEqual(
+            {"effective_exit_family": "terminal", "exit_floor": 5},
+            family_floor["modules"]["PM-03"],
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            state = Path(temporary) / "non-object-state.json"
+            state.write_text("[]", encoding="utf-8")
+            completed = cli(
+                "guard", str(state), str(Path(temporary) / "target"),
+                "--format", "json",
+            )
+
+        payload = self.assert_module_result(completed, "guard")
+        self.assertEqual("HOLD", payload["result"])
+        self.assertEqual(self.exit_for("terminal_or_target_hold"), completed.returncode)
+        self.assertEqual(
+            [("IN01_PARSE_ERROR", "ERROR")],
+            [(item["code"], item["severity"]) for item in payload["findings"]],
         )
 
     def test_module_result_json_conforms_for_all_six_modules(self):
@@ -279,7 +524,11 @@ class CliOutputContractTests(unittest.TestCase):
         self.assertEqual(self.exit_for("terminal_or_target_hold"), completed.returncode)
         self.assert_module_result(completed, "guard")
 
-    def test_published_precedence_controls_actual_outcome(self):
+    def test_t6_published_precedence_controls_actual_outcome(self):
+        self.assertEqual(
+            "structured_precedence_high_to_low",
+            self.f1_semantics("decision_order")[-1],
+        )
         precedence = {
             item["family"]: item
             for item in self.contract["exit_semantics"]["structured_precedence_high_to_low"]

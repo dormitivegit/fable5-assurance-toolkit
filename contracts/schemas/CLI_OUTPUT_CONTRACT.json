@@ -1,6 +1,6 @@
 {
-  "schema_version": "cli-output-contract/v1",
-  "contract_id": "FABLE5_CLI_OUTPUT_AND_EXIT_CONTRACT_20260815",
+  "schema_version": "cli-output-contract/v2",
+  "contract_id": "FABLE5_CLI_OUTPUT_AND_EXIT_CONTRACT_20260820",
   "normative": true,
   "authority_direction": "PUBLISHED_CONTRACT_TO_TEST_EXPECTATION_TO_ACTUAL_CLI_OUTPUT",
   "runtime_generation": {
@@ -455,6 +455,69 @@
     }
   ],
   "exit_semantics": {
+    "decision_order": [
+      "severity_effective_blocking",
+      "profile_promotion",
+      "module_family_floor",
+      "exact_decision_exception_override",
+      "structured_precedence_high_to_low"
+    ],
+    "severity_semantics": {
+      "blocking_severities": [
+        "ERROR",
+        "HOLD"
+      ],
+      "non_blocking_severities": [
+        "WARN",
+        "INFO"
+      ]
+    },
+    "profile_semantics": {
+      "default_profile": "normal",
+      "normal": {
+        "promotes_to_effective_blocking": []
+      },
+      "strict": {
+        "promotes_to_effective_blocking": [
+          "WARN"
+        ],
+        "serialized_severity_labels_unchanged": true
+      }
+    },
+    "family_floor": {
+      "applies_only_to_effectively_blocking_outcomes": true,
+      "finding_prefix_family_distinct_from_module_selected_effective_exit_family": true,
+      "modules": {
+        "PM-03": {
+          "effective_exit_family": "terminal",
+          "exit_floor": 5
+        },
+        "PM-04": {
+          "effective_exit_family": "integrity",
+          "exit_floor": 4
+        }
+      }
+    },
+    "exact_decision_exceptions": [
+      {
+        "id": "pm04_malformed_accepted_manifest_sha256",
+        "match": {
+          "module_id": "PM-04",
+          "finding_count": 1,
+          "finding": {
+            "code": "IN01_PARSE_ERROR",
+            "location": "accepted_manifest_sha256",
+            "severity": "ERROR"
+          }
+        },
+        "decision": {
+          "effective_exit_class": "input_or_invocation_fail",
+          "result": "FAIL",
+          "module_family_floor_applies": false
+        },
+        "precedence": "EXACT_EXCEPTION_OVERRIDES_MODULE_FAMILY_FLOOR"
+      }
+    ],
     "codes": {
       "0": {
         "class": "success",
@@ -524,6 +587,7 @@
         "structured_json": false
       }
     ],
-    "input_finding_does_not_override_higher_precedence_family": true
+    "input_finding_does_not_override_higher_precedence_family_by_default": true,
+    "default_is_subject_to_exact_decision_exceptions": true
   }
 }
