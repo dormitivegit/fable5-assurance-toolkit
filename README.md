@@ -56,6 +56,49 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src \
 Use `--format json` when another tool or AI agent will consume the result. Run
 `python3 -m assurance_toolkit <command> --help` for command-specific options.
 
+For an already accepted corpus manifest, bind verification to its exact raw
+bytes as well as its semantic records:
+
+```sh
+assurance corpus verify MANIFEST \
+  --accepted-manifest-sha256 SHA256 \
+  --format json
+```
+
+The accepted SHA-256 is caller supplied. It anchors the exact manifest bytes
+and therefore the recorded scope declaration; it does not prove that the
+chosen roots or exclusions are complete, optimal, or authorized.
+
+## CLI output and exit contract
+
+The normative, machine-readable contract is
+[`contracts/schemas/CLI_OUTPUT_CONTRACT.json`](contracts/schemas/CLI_OUTPUT_CONTRACT.json).
+It distinguishes ModuleResult JSON, CLI parse-failure JSON, argparse usage
+text, help/version text, and the existing synthetic-pilot JSON shape. In
+particular, parse-failure JSON uses the command string as `module_id` and
+`recovery-1` as `rule_set_version`; argparse usage failures emit no JSON.
+
+| Exit | Meaning |
+| --- | --- |
+| 0 | PASS or successful non-error command |
+| 1 | generic FAIL |
+| 2 | input/invocation-class FAIL |
+| 3 | generic HOLD |
+| 4 | integrity-family HOLD |
+| 5 | terminal/target-family HOLD |
+
+For structured module outcomes, precedence is
+`terminal(5) > integrity(4) > HOLD-severity(3) > input-class(2) > generic(1)`.
+An `IN*` finding therefore does not force exit 2 when a higher-precedence
+family co-occurs.
+
+This build publishes the current output/exit contract, not the complete
+current-generation input contract needed to reauthor every preserved A1 case.
+A1 remains predecessor-generation evidence only, not a current release gate,
+compatibility claim, or adoption claim. Any future reactivation requires
+sufficient normative input and output authority plus fresh execution and
+discriminating-power evidence.
+
 ## Try the end-to-end example
 
 Run a deterministic walkthrough that surrounds a simulated agent-generated

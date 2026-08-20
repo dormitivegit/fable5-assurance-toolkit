@@ -23,6 +23,12 @@ class CorpusFixtureMixin:
     def tearDown(self):
         self.temp.cleanup()
 
+    def write_records(self, path, records):
+        path.write_text(
+            "".join(json.dumps(item, separators=(",", ":")) + "\n" for item in records),
+            encoding="utf-8",
+        )
+
 
 class CorpusFreezeTests(CorpusFixtureMixin, unittest.TestCase):
     def test_valid_freeze_and_verify(self):
@@ -229,6 +235,79 @@ class CorpusVerifyTests(CorpusFixtureMixin, unittest.TestCase):
             handle.writestr("member.txt", "new")
         result = verify(self.manifest).to_dict()
         self.assertIn("CI03_SOURCE_CHANGED", [item["code"] for item in result["findings"]])
+
+    def test_accepted_manifest_option_omitted_preserves_behavior(self):
+        self.freeze()
+        without_option = verify(self.manifest).to_dict()
+        explicit_none = verify(self.manifest, accepted_manifest_sha256=None).to_dict()
+        self.assertEqual(without_option, explicit_none)
+
+    def test_malformed_accepted_manifest_sha_is_input_failure(self):
+        self.freeze()
+        result = verify(self.manifest, accepted_manifest_sha256="0" * 63).to_dict()
+        self.assertEqual("FAIL", result["result"])
+        self.assertEqual(2, result["exit_code"])
+        self.assertIn("IN01_PARSE_ERROR", [item["code"] for item in result["findings"]])
+
+    def test_exact_accepted_manifest_sha_verifies_normally(self):
+        self.freeze()
+        accepted = sha256_file(self.manifest)
+        result = verify(self.manifest, accepted_manifest_sha256=accepted).to_dict()
+        self.assertEqual("PASS", result["result"])
+        self.assertEqual(0, result["exit_code"])
+
+    def test_wrong_accepted_manifest_sha_is_integrity_hold(self):
+        self.freeze()
+        result = verify(self.manifest, accepted_manifest_sha256="0" * 64).to_dict()
+        self.assertEqual("HOLD", result["result"])
+        self.assertEqual(4, result["exit_code"])
+        self.assertIn("CI11_ACCEPTED_MANIFEST_MISMATCH", [item["code"] for item in result["findings"]])
+
+    def test_wrong_accepted_sha_and_malformed_jsonl_preserve_both_findings(self):
+        self.manifest.write_text("not-json\n", encoding="utf-8")
+        result = verify(self.manifest, accepted_manifest_sha256="0" * 64).to_dict()
+        codes = [item["code"] for item in result["findings"]]
+        self.assertIn("CI11_ACCEPTED_MANIFEST_MISMATCH", codes)
+        self.assertIn("CI09_MALFORMED_MANIFEST", codes)
+        self.assertEqual(4, result["exit_code"])
+
+    def test_self_consistent_manifest_rewrite_is_rejected_by_accepted_sha(self):
+        self.freeze()
+        accepted = sha256_file(self.manifest)
+        records = read_jsonl(self.manifest)
+        records[0]["creation_mode"] = "SELF_CONSISTENT_REWRITE"
+        self.write_records(self.manifest, records)
+        semantic_only = verify(self.manifest).to_dict()
+        anchored = verify(self.manifest, accepted_manifest_sha256=accepted).to_dict()
+        self.assertEqual("PASS", semantic_only["result"])
+        self.assertEqual(4, anchored["exit_code"])
+        self.assertIn("CI11_ACCEPTED_MANIFEST_MISMATCH", [item["code"] for item in anchored["findings"]])
+
+    def test_manifest_summary_counts_are_validated(self):
+        for field in (
+            "source_record_count",
+            "duplicate_group_count",
+            "special_file_skip_count",
+        ):
+            with self.subTest(field=field):
+                manifest = self.base / f"{field}.jsonl"
+                frozen = freeze([self.root], [], manifest).to_dict()
+                self.assertEqual("PASS", frozen["result"])
+                records = read_jsonl(manifest)
+                records[-1][field] += 1
+                self.write_records(manifest, records)
+                result = verify(manifest).to_dict()
+                self.assertEqual(4, result["exit_code"])
+                self.assertIn("CI12_MANIFEST_SUMMARY_INCONSISTENT", [item["code"] for item in result["findings"]])
+
+    def test_manifest_header_rule_version_mismatch_fails_closed(self):
+        self.freeze()
+        records = read_jsonl(self.manifest)
+        records[0]["rule_version"] = "unsupported-rule-generation"
+        self.write_records(self.manifest, records)
+        result = verify(self.manifest).to_dict()
+        self.assertEqual(4, result["exit_code"])
+        self.assertIn("IN02_UNSUPPORTED_VERSION", [item["code"] for item in result["findings"]])
 
 
 if __name__ == "__main__":

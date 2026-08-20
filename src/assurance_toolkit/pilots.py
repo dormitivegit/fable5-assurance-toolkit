@@ -312,7 +312,7 @@ def pilot_b(root: Path) -> dict[str, Any]:
 
 
 def pilot_c1(root: Path) -> dict[str, Any]:
-    from .corpus import verify
+    from .corpus import RULE_VERSION, verify
     from .terminal import preflight
 
     root.mkdir(parents=False)
@@ -326,7 +326,7 @@ def pilot_c1(root: Path) -> dict[str, Any]:
     self_manifest.write_text(
         json.dumps({
             "schema_version": "corpus-manifest/v1", "record_type": "manifest_header",
-            "rule_version": "ci-v1-recovery", "roots": [str(source_root)],
+            "rule_version": RULE_VERSION, "roots": [str(source_root)],
             "real_roots": [str(source_root.resolve())], "exclusions": [],
             "creation_mode": "SYNTHETIC_SELF_INGESTION_TRAP",
         }, separators=(",", ":")) + "\n" +

@@ -2,7 +2,9 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
+from assurance_toolkit import corpus
 from assurance_toolkit.pilots import run_pilot
 
 
@@ -51,6 +53,22 @@ class PilotPublicTests(unittest.TestCase):
         self.assertEqual(5, result["traps_blocked_before_mutation"])
         self.assertEqual(0, result["filesystem_mutation_count"])
         self.assertTrue(result["happy_path_preflight_pass"])
+
+    def test_pilot_c1_uses_canonical_pm04_rule_version(self):
+        observed = {}
+        original_verify = corpus.verify
+
+        def capture_rule_version(manifest, *args, **kwargs):
+            header = json.loads(Path(manifest).read_text(encoding="utf-8").splitlines()[0])
+            observed["rule_version"] = header.get("rule_version")
+            return original_verify(manifest, *args, **kwargs)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            with mock.patch.object(corpus, "RULE_VERSION", "ci-test-sentinel"):
+                with mock.patch.object(corpus, "verify", side_effect=capture_rule_version):
+                    result = run_pilot("C1", self.new_root(temporary, "c1-rule-version"))
+        self.assertEqual("PASS", result["result"])
+        self.assertEqual("ci-test-sentinel", observed["rule_version"])
 
     def test_pilot_c2_atomic_race_and_fault_contract(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -37,6 +37,28 @@ Pull requests that change behavior must include or update tests that exercise
 the new behavior and relevant failure paths. Documentation-only changes should
 still leave the complete suite passing.
 
+## Evidence for behavioral changes
+
+For each behavioral claim or change:
+
+- provide reproducible source or execution evidence for the claim;
+- add a regression test that exercises the changed behavior and its relevant
+  failure path;
+- state compatibility and security impact, including any migration cost;
+- update the public contract and documentation when observable behavior
+  changes;
+- report the exact CI/test command and result with a bounded claim;
+- treat roots, exclusions, and scope changes as behavioral-contract changes
+  requiring the same evidence; and
+- distinguish static inspection from execution evidence whenever the claim is
+  executable.
+
+Claims that an external harness or consumer provides compatibility coverage
+must include an execution receipt against the exact subject and generation.
+A baseline execution receipt must exist before that harness or consumer can be
+proposed as a release gate. Static inspection or reviewer agreement is not a
+substitute for that execution.
+
 ## Behavioral expectations
 
 - Preserve deterministic, reproducible results. Tests must not depend on wall

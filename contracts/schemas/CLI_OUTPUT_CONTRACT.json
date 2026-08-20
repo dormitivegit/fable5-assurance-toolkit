@@ -1,0 +1,529 @@
+{
+  "schema_version": "cli-output-contract/v1",
+  "contract_id": "FABLE5_CLI_OUTPUT_AND_EXIT_CONTRACT_20260815",
+  "normative": true,
+  "authority_direction": "PUBLISHED_CONTRACT_TO_TEST_EXPECTATION_TO_ACTUAL_CLI_OUTPUT",
+  "runtime_generation": {
+    "product_version": "0.3.0-recovery.3",
+    "python_distribution_version": "0.3.0rc3",
+    "status": "full-functional-recovery-candidate"
+  },
+  "scope": {
+    "covered_envelope_ids": [
+      "module_result_json",
+      "cli_parse_failure_json",
+      "argparse_usage_error",
+      "help_and_version_text",
+      "synthetic_pilot_result_json"
+    ],
+    "complete_current_input_contract_published": false,
+    "runtime_result_schema_version_field": "FORBIDDEN_IN_THIS_GENERATION",
+    "a1_current_release_gate": false,
+    "a1_current_compatibility_claim": false,
+    "a1_public_adoption_claim": false,
+    "a1_predecessor_generation_evidence_preserved": true
+  },
+  "finding_schema": {
+    "relative_path": "FINDING_SCHEMA.json",
+    "relationship": "EACH_MODULE_RESULT_FINDING_AND_PARSE_FAILURE_FINDING_MUST_CONFORM"
+  },
+  "envelopes": [
+    {
+      "id": "module_result_json",
+      "serialization": "stdout_json",
+      "stderr_empty": true,
+      "required_top_level_fields": [
+        "result",
+        "module_id",
+        "module_version",
+        "rule_set_version",
+        "profile",
+        "findings",
+        "facts",
+        "exit_code"
+      ],
+      "forbidden_top_level_fields": [
+        "schema_version"
+      ],
+      "result_enum": [
+        "PASS",
+        "FAIL",
+        "HOLD"
+      ],
+      "module_version": "0.3.0-recovery.3",
+      "modules": {
+        "PM-01": {
+          "rule_set_version": "rr-v1-recovery",
+          "operations": {
+            "classify": {
+              "allowed_extension_fields": [
+                "tier",
+                "base_reason",
+                "escalation_triggers",
+                "deescalation_evidence",
+                "required_controls",
+                "explicitly_unnecessary",
+                "human_decision_required",
+                "classification_is_authorization"
+              ],
+              "required_extension_fields_on_pass": [
+                "tier",
+                "base_reason",
+                "escalation_triggers",
+                "deescalation_evidence",
+                "required_controls",
+                "explicitly_unnecessary",
+                "human_decision_required",
+                "classification_is_authorization"
+              ]
+            }
+          }
+        },
+        "PM-02": {
+          "rule_set_version": "gp-v1-recovery",
+          "operations": {
+            "check": {
+              "allowed_extension_fields": [
+                "supplied_tier"
+              ],
+              "required_extension_fields_on_pass": []
+            }
+          }
+        },
+        "PM-03": {
+          "rule_set_version": "tg-v1-recovery",
+          "operations": {
+            "guard": {
+              "allowed_extension_fields": [
+                "allow_write",
+                "plan",
+                "required_human_action",
+                "positive_predicates",
+                "guard_is_read_only",
+                "toctou_ceiling"
+              ],
+              "required_extension_fields_on_pass": [
+                "allow_write",
+                "plan",
+                "required_human_action",
+                "positive_predicates",
+                "guard_is_read_only",
+                "toctou_ceiling"
+              ]
+            }
+          }
+        },
+        "PM-04": {
+          "rule_set_version": "ci-v1-recovery",
+          "operations": {
+            "corpus_freeze": {
+              "allowed_extension_fields": [
+                "manifest",
+                "write_disposition",
+                "source_record_count",
+                "duplicate_group_count",
+                "special_file_skip_count"
+              ],
+              "required_extension_fields_on_pass": [
+                "manifest",
+                "write_disposition",
+                "source_record_count",
+                "duplicate_group_count",
+                "special_file_skip_count"
+              ]
+            },
+            "corpus_verify": {
+              "allowed_extension_fields": [
+                "counts",
+                "detect_new"
+              ],
+              "required_extension_fields_on_pass": [
+                "counts",
+                "detect_new"
+              ]
+            }
+          }
+        },
+        "PM-05": {
+          "rule_set_version": "hc-v1-recovery",
+          "operations": {
+            "handoff": {
+              "allowed_extension_fields": [
+                "mode",
+                "carrier_identity",
+                "carrier_sha256",
+                "dimensions_observed",
+                "authority_vocabulary_supported",
+                "receiver_ready",
+                "semantically_complete",
+                "fully_self_contained"
+              ],
+              "required_extension_fields_on_pass": [
+                "mode",
+                "carrier_identity",
+                "carrier_sha256",
+                "dimensions_observed",
+                "authority_vocabulary_supported",
+                "receiver_ready",
+                "semantically_complete",
+                "fully_self_contained"
+              ]
+            },
+            "closeout": {
+              "allowed_extension_fields": [],
+              "required_extension_fields_on_pass": []
+            }
+          }
+        },
+        "PM-06": {
+          "rule_set_version": "ev-v1-recovery",
+          "operations": {
+            "eval_prepare": {
+              "allowed_extension_fields": [
+                "prepared",
+                "output",
+                "write_disposition",
+                "case_count",
+                "max_score"
+              ],
+              "required_extension_fields_on_pass": [
+                "output",
+                "write_disposition",
+                "case_count",
+                "max_score"
+              ]
+            },
+            "eval_score": {
+              "allowed_extension_fields": [
+                "case_set_sha256",
+                "case_count",
+                "max_score",
+                "total_score",
+                "ratio",
+                "band",
+                "high_weight_automatic_fail_count",
+                "capability_profile",
+                "semantic_scoring_source",
+                "automatic_semantic_scoring",
+                "promotion_decision",
+                "model_network_calls"
+              ],
+              "required_extension_fields_on_pass": [
+                "case_set_sha256",
+                "case_count",
+                "max_score",
+                "total_score",
+                "ratio",
+                "band",
+                "high_weight_automatic_fail_count",
+                "capability_profile",
+                "semantic_scoring_source",
+                "automatic_semantic_scoring",
+                "promotion_decision",
+                "model_network_calls"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "cli_parse_failure_json",
+      "serialization": "stdout_json",
+      "stderr_empty": true,
+      "required_top_level_fields": [
+        "result",
+        "module_id",
+        "module_version",
+        "rule_set_version",
+        "profile",
+        "findings",
+        "facts",
+        "exit_code"
+      ],
+      "allowed_top_level_fields": [
+        "result",
+        "module_id",
+        "module_version",
+        "rule_set_version",
+        "profile",
+        "findings",
+        "facts",
+        "exit_code"
+      ],
+      "result": "FAIL",
+      "module_id_semantics": "TOP_LEVEL_COMMAND_STRING_NOT_PM_MODULE_ID",
+      "module_id_enum": [
+        "classify",
+        "check",
+        "guard",
+        "corpus",
+        "handoff",
+        "closeout",
+        "eval",
+        "pilot"
+      ],
+      "module_version": "0.3.0-recovery.3",
+      "rule_set_version": "recovery-1",
+      "profile": "normal",
+      "finding": {
+        "code": "IN01_PARSE_ERROR",
+        "severity": "ERROR",
+        "rule_version": "recovery-1"
+      },
+      "exit_code": 2
+    },
+    {
+      "id": "argparse_usage_error",
+      "serialization": "stderr_text",
+      "structured_result_document": false,
+      "stdout_empty": true,
+      "stderr_contains": [
+        "usage: assurance"
+      ],
+      "exit_code": 2
+    },
+    {
+      "id": "help_and_version_text",
+      "serialization": "stdout_text",
+      "structured_result_document": false,
+      "stderr_empty": true,
+      "exit_code": 0,
+      "variants": {
+        "help": {
+          "arguments": [
+            "--help"
+          ],
+          "stdout_contains": [
+            "usage: assurance",
+            "FABLE5 local deterministic assurance toolkit"
+          ]
+        },
+        "version": {
+          "arguments": [
+            "--version"
+          ],
+          "stdout_contains": [
+            "assurance 0.3.0-recovery.3",
+            "python-distribution-version: 0.3.0rc3",
+            "status: full-functional-recovery-candidate"
+          ]
+        }
+      }
+    },
+    {
+      "id": "synthetic_pilot_result_json",
+      "serialization": "stdout_json",
+      "stderr_empty": true,
+      "required_top_level_fields": [
+        "pilot",
+        "result",
+        "exit_code"
+      ],
+      "result_enum": [
+        "PASS",
+        "FAIL",
+        "HOLD"
+      ],
+      "pilot_id_enum": [
+        "A",
+        "B",
+        "C1",
+        "C2"
+      ],
+      "exit_codes_by_result": {
+        "PASS": 0,
+        "FAIL": 3,
+        "HOLD": 3
+      },
+      "failure_extension_fields": [
+        "code",
+        "message"
+      ],
+      "variants": {
+        "A": {
+          "allowed_extension_fields": [
+            "normal_variants",
+            "blocking_false_positive_count",
+            "escalation_variants",
+            "escalation_detected_count",
+            "manufactured_defect_count",
+            "descriptor_author",
+            "normal_results",
+            "escalation_results",
+            "inputs_unchanged"
+          ],
+          "required_extension_fields_on_pass": [
+            "normal_variants",
+            "blocking_false_positive_count",
+            "escalation_variants",
+            "escalation_detected_count",
+            "manufactured_defect_count",
+            "descriptor_author",
+            "normal_results",
+            "escalation_results",
+            "inputs_unchanged"
+          ]
+        },
+        "B": {
+          "allowed_extension_fields": [
+            "defect_class_count",
+            "false_negative_count",
+            "blocking_false_positive_count",
+            "valid_workflow_pass",
+            "scope_outside_write_count",
+            "global_or_user_git_config_delta",
+            "network_contact_count",
+            "adversarial_checks_pass",
+            "defects",
+            "valid_workflow_assessment",
+            "adversarial_traps"
+          ],
+          "required_extension_fields_on_pass": [
+            "defect_class_count",
+            "false_negative_count",
+            "blocking_false_positive_count",
+            "valid_workflow_pass",
+            "scope_outside_write_count",
+            "global_or_user_git_config_delta",
+            "network_contact_count",
+            "adversarial_checks_pass",
+            "defects",
+            "valid_workflow_assessment",
+            "adversarial_traps"
+          ]
+        },
+        "C1": {
+          "allowed_extension_fields": [
+            "trap_count",
+            "traps_blocked_before_mutation",
+            "filesystem_mutation_count",
+            "happy_path_preflight_pass",
+            "traps",
+            "guard_is_read_only"
+          ],
+          "required_extension_fields_on_pass": [
+            "trap_count",
+            "traps_blocked_before_mutation",
+            "filesystem_mutation_count",
+            "happy_path_preflight_pass",
+            "traps",
+            "guard_is_read_only"
+          ]
+        },
+        "C2": {
+          "allowed_extension_fields": [
+            "target_absent",
+            "target_present_same_hash",
+            "target_present_different_hash",
+            "concurrent_creator_wins",
+            "closed_without_reopen",
+            "two_writer_race_rounds",
+            "multi_writer_race_rounds",
+            "clobber_count",
+            "partial_target_count",
+            "orphan_temp_count",
+            "outside_root_write_count",
+            "fault_case_count",
+            "fault_cases_pass",
+            "fault_results",
+            "race_results",
+            "atomic_install_primitive",
+            "writer_scope"
+          ],
+          "required_extension_fields_on_pass": [
+            "target_absent",
+            "target_present_same_hash",
+            "target_present_different_hash",
+            "concurrent_creator_wins",
+            "closed_without_reopen",
+            "two_writer_race_rounds",
+            "multi_writer_race_rounds",
+            "clobber_count",
+            "partial_target_count",
+            "orphan_temp_count",
+            "outside_root_write_count",
+            "fault_case_count",
+            "fault_cases_pass",
+            "fault_results",
+            "race_results",
+            "atomic_install_primitive",
+            "writer_scope"
+          ]
+        }
+      }
+    }
+  ],
+  "exit_semantics": {
+    "codes": {
+      "0": {
+        "class": "success",
+        "meaning": "PASS_OR_SUCCESSFUL_NON_ERROR_COMMAND"
+      },
+      "1": {
+        "class": "generic_fail",
+        "meaning": "GENERIC_FAIL"
+      },
+      "2": {
+        "class": "input_or_invocation_fail",
+        "meaning": "INPUT_OR_INVOCATION_CLASS_FAIL"
+      },
+      "3": {
+        "class": "generic_hold",
+        "meaning": "GENERIC_HOLD"
+      },
+      "4": {
+        "class": "integrity_hold",
+        "meaning": "INTEGRITY_FAMILY_HOLD"
+      },
+      "5": {
+        "class": "terminal_or_target_hold",
+        "meaning": "TERMINAL_OR_TARGET_FAMILY_HOLD"
+      }
+    },
+    "structured_precedence_high_to_low": [
+      {
+        "family": "terminal",
+        "finding_prefix": "TG",
+        "exit_code": 5
+      },
+      {
+        "family": "integrity",
+        "finding_prefix": "CI",
+        "exit_code": 4
+      },
+      {
+        "family": "hold_severity",
+        "severity": "HOLD",
+        "exit_code": 3
+      },
+      {
+        "family": "input",
+        "finding_prefix": "IN",
+        "exit_code": 2
+      },
+      {
+        "family": "generic",
+        "exit_code": 1
+      }
+    ],
+    "exit_2_producers": [
+      {
+        "id": "module_input_finding",
+        "envelope_id": "module_result_json",
+        "structured_json": true
+      },
+      {
+        "id": "cli_parse_failure",
+        "envelope_id": "cli_parse_failure_json",
+        "structured_json": true
+      },
+      {
+        "id": "argparse_usage_error",
+        "envelope_id": "argparse_usage_error",
+        "structured_json": false
+      }
+    ],
+    "input_finding_does_not_override_higher_precedence_family": true
+  }
+}

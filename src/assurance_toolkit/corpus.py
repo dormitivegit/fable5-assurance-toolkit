@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import stat
 import zipfile
 from collections import defaultdict
@@ -10,13 +11,14 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 from .findings import finding, outcome, sort_findings
-from .io_utils import canonical_json, read_jsonl, sha256_bytes, sha256_file
+from .io_utils import canonical_json, parse_json_bytes, sha256_bytes, sha256_file
 from .models import ModuleResult
 from .no_clobber import write_new_or_same
 
 MODULE_ID = "PM-04"
 RULE_VERSION = "ci-v1-recovery"
 SCHEMA_VERSION = "corpus-manifest/v1"
+SHA256_PATTERN = re.compile(r"[0-9a-fA-F]{64}")
 
 
 def _under(path: Path, parent: Path) -> bool:
@@ -33,6 +35,52 @@ def _path_forms(path: Path) -> tuple[Path, Path]:
 
 def _excluded(lexical: Path, real: Path, exclusions: list[tuple[Path, Path]]) -> bool:
     return any(_under(lexical, left) or _under(real, right) for left, right in exclusions)
+
+
+def _parse_jsonl_bytes(data: bytes) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for line_number, raw in enumerate(data.splitlines(), 1):
+        if not raw.strip():
+            continue
+        value = parse_json_bytes(raw)
+        if not isinstance(value, dict):
+            raise ValueError(f"line {line_number} is not a JSON object")
+        records.append(value)
+    return records
+
+
+def _current_special_file_skip_count(header: dict[str, Any], manifest: Path) -> int | None:
+    roots = header.get("roots")
+    raw_exclusions = header.get("exclusions")
+    if not isinstance(roots, list) or not all(isinstance(item, str) for item in roots):
+        return None
+    if not isinstance(raw_exclusions, list) or not all(isinstance(item, str) for item in raw_exclusions):
+        return None
+    root_forms = [_path_forms(Path(item)) for item in roots]
+    if any(not lexical.exists() or lexical.is_symlink() or not lexical.is_dir() for lexical, _ in root_forms):
+        return None
+    exclusion_forms = [_path_forms(Path(item)) for item in raw_exclusions]
+    exclusion_forms.append(_path_forms(manifest))
+    skipped_special = 0
+    for root_lex, _ in root_forms:
+        for current, dirs, files in os.walk(root_lex, topdown=True, followlinks=False):
+            current_path = Path(current)
+            kept_dirs = []
+            for name in sorted(dirs):
+                path = current_path / name
+                lexical, real = _path_forms(path)
+                if _excluded(lexical, real, exclusion_forms) or path.is_symlink():
+                    continue
+                kept_dirs.append(name)
+            dirs[:] = kept_dirs
+            for name in sorted(files):
+                path = current_path / name
+                lexical, real = _path_forms(path)
+                if _excluded(lexical, real, exclusion_forms):
+                    continue
+                if not path.is_symlink() and not path.is_file():
+                    skipped_special += 1
+    return skipped_special
 
 
 def _archive_records(root_index: int, root: Path, file_path: Path, relative: str) -> list[dict[str, Any]]:
@@ -194,12 +242,49 @@ def freeze(
     return ModuleResult("PASS", MODULE_ID, rule_set_version=RULE_VERSION, findings=sort_findings(findings), facts=[{"manifest_sha256": sha256_bytes(data)}, {"source_record_count": len(records)}], exit_code=0, data={"manifest": str(manifest), "write_disposition": disposition, "source_record_count": len(records), "duplicate_group_count": len(duplicate_groups), "special_file_skip_count": skipped_special})
 
 
-def verify(manifest_path: str | Path, detect_new: bool = False) -> ModuleResult:
+def verify(
+    manifest_path: str | Path,
+    detect_new: bool = False,
+    accepted_manifest_sha256: str | None = None,
+) -> ModuleResult:
     findings = []
     manifest = Path(manifest_path)
+    if accepted_manifest_sha256 is not None and (
+        not isinstance(accepted_manifest_sha256, str)
+        or SHA256_PATTERN.fullmatch(accepted_manifest_sha256) is None
+    ):
+        findings.append(finding(
+            "IN01_PARSE_ERROR",
+            "ERROR",
+            str(manifest),
+            "accepted_manifest_sha256",
+            "accepted manifest SHA-256 must be exactly 64 hexadecimal characters",
+            accepted_manifest_sha256,
+        ))
+        result, exit_code = outcome(findings, "normal")
+        return ModuleResult(result, MODULE_ID, rule_set_version=RULE_VERSION, findings=sort_findings(findings), exit_code=exit_code)
     try:
-        records = read_jsonl(manifest)
-    except (OSError, UnicodeError, ValueError) as exc:
+        manifest_bytes = manifest.read_bytes()
+    except OSError as exc:
+        findings.append(finding("CI09_MALFORMED_MANIFEST", "ERROR", str(manifest), "manifest", "manifest cannot be read as object-per-line JSONL", exc.__class__.__name__))
+        result, exit_code = outcome(findings, "normal", family="integrity")
+        return ModuleResult(result, MODULE_ID, rule_set_version=RULE_VERSION, findings=sort_findings(findings), exit_code=exit_code)
+    actual_manifest_sha256 = sha256_bytes(manifest_bytes)
+    if (
+        accepted_manifest_sha256 is not None
+        and accepted_manifest_sha256.lower() != actual_manifest_sha256
+    ):
+        findings.append(finding(
+            "CI11_ACCEPTED_MANIFEST_MISMATCH",
+            "HOLD",
+            str(manifest),
+            "manifest",
+            "manifest raw-byte SHA-256 differs from the caller-supplied accepted identity",
+            {"expected": accepted_manifest_sha256.lower(), "actual": actual_manifest_sha256},
+        ))
+    try:
+        records = _parse_jsonl_bytes(manifest_bytes)
+    except (UnicodeError, ValueError) as exc:
         findings.append(finding("CI09_MALFORMED_MANIFEST", "ERROR", str(manifest), "manifest", "manifest cannot be parsed as object-per-line JSONL", exc.__class__.__name__))
         result, exit_code = outcome(findings, "normal", family="integrity")
         return ModuleResult(result, MODULE_ID, rule_set_version=RULE_VERSION, findings=sort_findings(findings), exit_code=exit_code)
@@ -208,6 +293,15 @@ def verify(manifest_path: str | Path, detect_new: bool = False) -> ModuleResult:
         header = {}
     else:
         header = records[0]
+    if header and header.get("rule_version") != RULE_VERSION:
+        findings.append(finding(
+            "IN02_UNSUPPORTED_VERSION",
+            "ERROR",
+            str(manifest),
+            "line 1 rule_version",
+            "unsupported PM-04 manifest rule version",
+            header.get("rule_version"),
+        ))
     for index, record in enumerate(records, 1):
         if record.get("schema_version") != SCHEMA_VERSION:
             findings.append(finding("IN02_UNSUPPORTED_VERSION", "ERROR", str(manifest), f"line {index}", "unsupported manifest schema version", record.get("schema_version")))
@@ -217,6 +311,33 @@ def verify(manifest_path: str | Path, detect_new: bool = False) -> ModuleResult:
     exclusions = [Path(value) for value in header.get("exclusions", []) if isinstance(value, str)]
     states: list[dict[str, Any]] = []
     source_records = [item for item in records if item.get("record_type") == "source_record"]
+    duplicate_groups = [item for item in records if item.get("record_type") == "duplicate_group"]
+    summaries = [item for item in records if item.get("record_type") == "manifest_summary"]
+    observed_summary = summaries[0] if len(summaries) == 1 else None
+    actual_summary = {
+        "source_record_count": len(source_records),
+        "duplicate_group_count": len(duplicate_groups),
+        "special_file_skip_count": _current_special_file_skip_count(header, manifest) if header else None,
+    }
+    summary_consistent = observed_summary is not None and records[-1] is observed_summary
+    if summary_consistent:
+        for name, actual in actual_summary.items():
+            observed = observed_summary.get(name)
+            if isinstance(observed, bool) or not isinstance(observed, int) or observed < 0:
+                summary_consistent = False
+                break
+            if actual is not None and observed != actual:
+                summary_consistent = False
+                break
+    if not summary_consistent:
+        findings.append(finding(
+            "CI12_MANIFEST_SUMMARY_INCONSISTENT",
+            "ERROR",
+            str(manifest),
+            "manifest_summary",
+            "manifest summary counts or placement do not match the manifest records and current special-file skips",
+            {"observed": observed_summary, "actual": actual_summary, "summary_record_count": len(summaries)},
+        ))
     observed_members: dict[str, set[str]] = defaultdict(set)
     for record in source_records:
         path = Path(str(record.get("filesystem_path", "")))
@@ -261,7 +382,7 @@ def verify(manifest_path: str | Path, detect_new: bool = False) -> ModuleResult:
             findings.append(finding("CI04_SOURCE_TYPE_CHANGED", "ERROR", str(path), "source_record", "unsupported recorded source type", source_type))
         states.append({"path": str(path), "relative_path": record.get("relative_path"), "state": state})
 
-    for group in [item for item in records if item.get("record_type") == "duplicate_group"]:
+    for group in duplicate_groups:
         expected = sorted(group.get("members", []))
         actual = sorted(
             f"{record['root_index']}:{record['relative_path']}:{record['source_type']}"

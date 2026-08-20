@@ -113,6 +113,7 @@ def build_parser() -> argparse.ArgumentParser:
     freeze_parser.add_argument("--format", choices=("text", "json"), default="text")
     verify_parser = corpus_commands.add_parser("verify")
     verify_parser.add_argument("manifest")
+    verify_parser.add_argument("--accepted-manifest-sha256", metavar="SHA256")
     verify_parser.add_argument("--detect-new", action="store_true")
     verify_parser.add_argument("--format", choices=("text", "json"), default="text")
 
@@ -177,7 +178,11 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "corpus" and args.corpus_command == "freeze":
             payload = freeze(args.roots, args.exclude, args.manifest).to_dict()
         elif args.command == "corpus" and args.corpus_command == "verify":
-            payload = verify(args.manifest, args.detect_new).to_dict()
+            payload = verify(
+                args.manifest,
+                args.detect_new,
+                accepted_manifest_sha256=args.accepted_manifest_sha256,
+            ).to_dict()
         elif args.command == "handoff":
             payload = validate_handoff(args.file, args.carrier, args.profile).to_dict()
         elif args.command == "closeout":
