@@ -46,8 +46,9 @@ decision; it did not make that decision.
 reviewed its result and the deterministic evidence, and retained human ownership
 of the merge decision.
 
-**What this proves.** Deterministic evidence can make an incomplete initial
-test invocation visible and support a bounded, reviewable maintenance workflow.
+**What this proves.** Ordinary execution evidence can expose an incomplete test
+invocation; FABLE5 can separately provide deterministic acceptance evidence that
+helps qualify a bounded maintainer decision.
 
 **What this does not prove.** It does not prove all mixed-language workspaces
 are covered, third-party adoption, broad compatibility, or automatic merge
