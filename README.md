@@ -69,6 +69,19 @@ The accepted SHA-256 is caller supplied. It anchors the exact manifest bytes
 and therefore the recorded scope declaration; it does not prove that the
 chosen roots or exclusions are complete, optimal, or authorized.
 
+Corpus manifests bind sources to the absolute filesystem paths recorded at
+freeze time. Verification expects those paths to keep identifying the intended
+sources; a manifest is not a portable "freeze on one machine, verify under a
+different layout" artifact. Manifests also disclose absolute paths and
+per-file hashes, so do not publish sensitive manifests verbatim or freeze
+credential-bearing roots.
+
+`--exclude` uses path containment/prefix semantics, not shell glob matching.
+With `--detect-new`, current normal verification reports
+`CI10_NEW_SOURCE_DETECTED` as `WARN`; when it is the only finding, the process
+still exits `0`. Consumers that need new-file gating must inspect structured
+findings as well as the process exit status.
+
 ## CLI output and exit contract
 
 The normative, machine-readable contract is
@@ -183,8 +196,8 @@ production. Those decisions remain with people responsible for the project.
 ## Project status and provenance
 
 ```text
-PRODUCT_VERSION=0.3.0-recovery.3
-PYTHON_DISTRIBUTION_VERSION=0.3.0rc3
+PRODUCT_VERSION=0.3.0-recovery.4
+PYTHON_DISTRIBUTION_VERSION=0.3.0rc4
 STATUS=full-functional-recovery-candidate
 LINEAGE_ID=FABLE5-ASSURANCE-TOOLKIT-FULL-FUNCTIONAL-RECOVERY-20260713
 ```
@@ -195,13 +208,15 @@ and pilot requirements. It claims continuity of the accepted functional
 contract, not recovery of historical source bytes, commits, or tags. The
 `v0.3.0-recovery.1` tag identifies the first recovery candidate in the
 reconstructed lineage; `v0.3.0-recovery.2` records the subsequent public
-open-source surface hardening; and `v0.3.0-recovery.3` generalizes the public
-authorization contract for external maintainers.
+open-source surface hardening; `v0.3.0-recovery.3` generalizes the public
+authorization contract for external maintainers; and `v0.3.0-recovery.4`
+publishes the current contract hardening and consumer guidance.
 
 The current status means the six modules and public interface have been
-reconstructed and mechanically tested. It does **not** claim independent
-review, user acceptance, external validation, canonical promotion, production
-readiness, or ecosystem adoption. See
+reconstructed and mechanically tested. Bounded independent review exists for
+the current contract/runtime correction; this is not a claim of comprehensive
+independent review, user acceptance, external validation, canonical promotion,
+production readiness, or ecosystem adoption. See
 [status semantics](docs/STATUS_SEMANTICS.md) and
 [recovery lineage](docs/RECOVERY_LINEAGE.md) for the precise claims.
 

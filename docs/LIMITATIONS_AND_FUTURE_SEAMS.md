@@ -14,6 +14,17 @@
 - An accepted manifest SHA-256 binds the exact manifest bytes and their
   recorded scope declaration. It does not prove that every relevant source was
   included or that the selected roots and exclusions were authorized.
+- Corpus manifests record absolute roots and per-source filesystem paths.
+  Freeze and verify therefore assume those recorded paths continue to identify
+  the intended sources; manifests do not relocate across filesystem layouts.
+- Corpus manifests disclose absolute paths and per-file hashes. Do not publish
+  sensitive manifests verbatim or freeze credential-bearing roots.
+- `--exclude` applies path containment/prefix semantics, not shell glob
+  matching.
+- Under current normal verification, `--detect-new` reports
+  `CI10_NEW_SOURCE_DETECTED` as `WARN` and that finding alone does not make the
+  process exit nonzero. New-file gates must inspect structured findings as well
+  as process exit.
 - Exact recorded scope is not the same as complete scope. A mechanically valid
   but overly broad scope can also saturate results with operational noise and
   hide useful signal.

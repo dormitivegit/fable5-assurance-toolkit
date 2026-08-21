@@ -22,13 +22,14 @@ publishes no guaranteed response or remediation SLA.
 
 ## Current security-support status
 
-FABLE5 `0.3.0-recovery.3` has
+FABLE5 `0.3.0-recovery.4` has
 `STATUS=full-functional-recovery-candidate`. Its implemented public interface
-has mechanical test coverage, but the candidate is not independently reviewed,
-user accepted, externally validated, canonical, deployed, or production ready.
-Reports concerning the current `main` branch and the recovery candidate
-are welcome, but this status must not be interpreted as a production-support
-commitment.
+has mechanical test coverage, and the current contract/runtime correction has
+received bounded independent review. This is not comprehensive independent
+review, user acceptance, external validation, canonical promotion, deployment,
+or production readiness. Reports concerning the current `main` branch and the
+recovery candidate are welcome, but this status must not be interpreted as a
+production-support commitment.
 
 The toolkit is designed to run locally without network access or
 non-standard-library Python runtime dependencies. Synthetic Pilot B invokes a

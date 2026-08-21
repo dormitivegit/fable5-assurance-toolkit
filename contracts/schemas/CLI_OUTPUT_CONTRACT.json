@@ -4,8 +4,8 @@
   "normative": true,
   "authority_direction": "PUBLISHED_CONTRACT_TO_TEST_EXPECTATION_TO_ACTUAL_CLI_OUTPUT",
   "runtime_generation": {
-    "product_version": "0.3.0-recovery.3",
-    "python_distribution_version": "0.3.0rc3",
+    "product_version": "0.3.0-recovery.4",
+    "python_distribution_version": "0.3.0rc4",
     "status": "full-functional-recovery-candidate"
   },
   "scope": {
@@ -50,7 +50,7 @@
         "FAIL",
         "HOLD"
       ],
-      "module_version": "0.3.0-recovery.3",
+      "module_version": "0.3.0-recovery.4",
       "modules": {
         "PM-01": {
           "rule_set_version": "rr-v1-recovery",
@@ -263,7 +263,7 @@
         "eval",
         "pilot"
       ],
-      "module_version": "0.3.0-recovery.3",
+      "module_version": "0.3.0-recovery.4",
       "rule_set_version": "recovery-1",
       "profile": "normal",
       "finding": {
@@ -304,8 +304,8 @@
             "--version"
           ],
           "stdout_contains": [
-            "assurance 0.3.0-recovery.3",
-            "python-distribution-version: 0.3.0rc3",
+            "assurance 0.3.0-recovery.4",
+            "python-distribution-version: 0.3.0rc4",
             "status: full-functional-recovery-candidate"
           ]
         }

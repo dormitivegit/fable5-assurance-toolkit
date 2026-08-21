@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0-recovery.4
+
+- Published the accepted-manifest and machine-readable CLI contract hardening
+  already established by the preceding exact commits.
+- Corrected the exact PM-04 malformed accepted-manifest SHA decision semantics
+  while preserving ordinary PM-04 integrity HOLD behavior.
+- Added consumer guidance for manifest path binding and non-relocatability,
+  manifest path/hash disclosure, prefix exclusion semantics, and CI10 WARN
+  behavior.
+- Recorded that the relevant contract/runtime correction received bounded
+  independent review, without claiming comprehensive review, external
+  validation, production readiness, or ecosystem adoption.
+
+This remains a full-functional recovery candidate.
+
 ## 0.3.0-recovery.3
 
 - Replaced the maintainer-specific authorization identity with an explicit,
