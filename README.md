@@ -15,8 +15,8 @@ decisions.
 ## Quick start
 
 FABLE5 requires Python 3.11 or newer and has no non-standard-library Python
-runtime dependencies. Install it from a repository checkout in an isolated
-environment:
+runtime dependencies. For the checkout-based examples below, run commands from
+the repository root. Install it in an isolated environment:
 
 ```sh
 python3 -m venv .venv
@@ -56,6 +56,20 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src \
 Use `--format json` when another tool or AI agent will consume the result. Run
 `python3 -m assurance_toolkit <command> --help` for command-specific options.
 
+## Start here: choose a command
+
+| If you need to… | Start with |
+| --- | --- |
+| assess the risk and required controls for a bounded proposed action | `assurance classify fixtures/classify/read-local-document.json --format json` |
+| validate a structured governance document before relying on it | `assurance check PACK.json --format json` |
+| inspect a terminal state or target collision without changing either | `assurance guard STATE.json TARGET --executor NAME --format json` |
+| freeze or verify the exact bytes of a bounded source set | `assurance corpus freeze ROOT --manifest MANIFEST --format json` or `assurance corpus verify MANIFEST --format json` |
+| structurally inspect a handoff or closeout record | `assurance handoff HANDOFF.json --carrier CARRIER --format json` or `assurance closeout CLOSEOUT.json --format json` |
+| prepare preserved evaluation cases or score supplied judgments | `assurance eval prepare CASES.jsonl --out PREPARED.json --format json` or `assurance eval score CASES.jsonl SCORES.jsonl --format json` |
+
+The commands report bounded evidence. They do not authorize a change, decide a
+merge, or replace human review.
+
 For an already accepted corpus manifest, bind verification to its exact raw
 bytes as well as its semantic records:
 
@@ -85,7 +99,7 @@ findings as well as the process exit status.
 ## CLI output and exit contract
 
 The normative, machine-readable contract is
-[`contracts/schemas/CLI_OUTPUT_CONTRACT.json`](contracts/schemas/CLI_OUTPUT_CONTRACT.json).
+[`contracts/schemas/CLI_OUTPUT_CONTRACT.json`](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/contracts/schemas/CLI_OUTPUT_CONTRACT.json).
 It distinguishes ModuleResult JSON, CLI parse-failure JSON, argparse usage
 text, help/version text, and the existing synthetic-pilot JSON shape. In
 particular, parse-failure JSON uses the command string as `module_id` and
@@ -135,8 +149,22 @@ change with risk, integrity, and handoff evidence:
 ```
 
 The example is local, network-free, self-cleaning, and leaves acceptance to a
-human reviewer. See the [example guide](examples/agent-change-assurance/README.md)
+human reviewer. See the [example guide](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/examples/agent-change-assurance/README.md)
 for the expected flow and claim boundaries.
+
+## Try a machine-consumer integration
+
+From the repository root, run:
+
+```sh
+python3 examples/machine-consumer/run.py
+```
+
+This small, disposable example creates a bounded source set, consumes JSON
+from `corpus verify --detect-new`, and takes a review branch when a nonblocking
+`WARN` finding is present even though the process exit is `0`. It demonstrates
+why a consumer must inspect structured findings rather than branch on exit
+status alone. See the [machine-consumer guide](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/examples/machine-consumer/README.md).
 
 ## Modules
 
@@ -173,10 +201,11 @@ atomic no-clobber seam; it is not reachable from ordinary project workflows.
 - **No hidden control plane:** there is no daemon, database, web UI, installed
   hook, automatic model call, semantic auto-score, or automatic promotion path.
 
-See [Architecture](docs/ARCHITECTURE.md),
-[module scope and non-goals](docs/MODULE_SCOPE_AND_NON_GOALS.md), and
-[known limitations](docs/LIMITATIONS_AND_FUTURE_SEAMS.md) for the detailed
-boundaries.
+See [Architecture](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/ARCHITECTURE.md),
+[module scope and non-goals](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/MODULE_SCOPE_AND_NON_GOALS.md), and
+[known limitations](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/LIMITATIONS_AND_FUTURE_SEAMS.md) for the detailed
+boundaries. Read [validated workflows](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/VALIDATED_WORKFLOWS.md) for two
+bounded, maintainer-controlled downstream cases and their claim limits.
 
 ## AI-agent and maintainer workflow
 
@@ -196,8 +225,8 @@ production. Those decisions remain with people responsible for the project.
 ## Project status and provenance
 
 ```text
-PRODUCT_VERSION=0.3.0-recovery.4
-PYTHON_DISTRIBUTION_VERSION=0.3.0rc4
+PRODUCT_VERSION=0.3.0-recovery.5
+PYTHON_DISTRIBUTION_VERSION=0.3.0rc5
 STATUS=full-functional-recovery-candidate
 LINEAGE_ID=FABLE5-ASSURANCE-TOOLKIT-FULL-FUNCTIONAL-RECOVERY-20260713
 ```
@@ -210,28 +239,31 @@ contract, not recovery of historical source bytes, commits, or tags. The
 reconstructed lineage; `v0.3.0-recovery.2` records the subsequent public
 open-source surface hardening; `v0.3.0-recovery.3` generalizes the public
 authorization contract for external maintainers; and `v0.3.0-recovery.4`
-publishes the current contract hardening and consumer guidance.
+publishes the current contract hardening and consumer guidance. The prepared
+`v0.3.0-recovery.5` release adds first-run navigation, validated
+maintainer-controlled workflow summaries, a runnable machine-consumer path,
+and PEP 517 distribution metadata; it does not itself publish a package.
 
 The current status means the six modules and public interface have been
 reconstructed and mechanically tested. Bounded independent review exists for
 the current contract/runtime correction; this is not a claim of comprehensive
 independent review, user acceptance, external validation, canonical promotion,
 production readiness, or ecosystem adoption. See
-[status semantics](docs/STATUS_SEMANTICS.md) and
-[recovery lineage](docs/RECOVERY_LINEAGE.md) for the precise claims.
+[status semantics](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/STATUS_SEMANTICS.md) and
+[recovery lineage](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/RECOVERY_LINEAGE.md) for the precise claims.
 
 ## Contributing
 
 Focused issues and pull requests are welcome. Read
-[CONTRIBUTING.md](CONTRIBUTING.md) for test, determinism, and AI-assisted
+[CONTRIBUTING.md](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/CONTRIBUTING.md) for test, determinism, and AI-assisted
 contribution expectations. Maintainer roles are documented in
-[MAINTAINERS.md](MAINTAINERS.md).
+[MAINTAINERS.md](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/MAINTAINERS.md).
 
 ## Security
 
 Do not report vulnerabilities or exploit details in a public issue. Follow the
-private reporting process in [SECURITY.md](SECURITY.md).
+private reporting process in [SECURITY.md](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/SECURITY.md).
 
 ## License
 
-Licensed under the [Apache License 2.0](LICENSE).
+Licensed under the [Apache License 2.0](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/LICENSE).

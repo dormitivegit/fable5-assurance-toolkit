@@ -32,3 +32,37 @@ jobs:
 
       - name: Run tests
         run: PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python -m unittest discover -s tests -v
+
+  package-self-test:
+    name: Package self-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Install PEP 517 build frontend
+        run: python -m pip install --disable-pip-version-check build
+
+      - name: Build source and wheel distributions
+        run: python -m build
+
+      - name: Run the suite shipped in the source distribution
+        run: |
+          extract_root="$(mktemp -d)"
+          tar -xzf dist/*.tar.gz -C "$extract_root"
+          sdist_root="$(find "$extract_root" -mindepth 1 -maxdepth 1 -type d -print -quit)"
+          cd "$sdist_root"
+          PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python -m unittest discover -s tests -v
+
+      - name: Install and smoke-test the wheel without an index
+        run: |
+          python -m venv .package-smoke
+          .package-smoke/bin/python -m pip install --no-index --no-deps dist/*.whl
+          .package-smoke/bin/assurance --version
+          .package-smoke/bin/assurance classify fixtures/classify/read-local-document.json --format json | .package-smoke/bin/python -c 'import json, sys; payload = json.load(sys.stdin); assert payload["result"] == "PASS" and payload["tier"] == "T0"'

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.0-recovery.5
+
+- Made checkout-first onboarding explicit, added a progressive command map,
+  and added a runnable machine-consumer example that inspects structured WARN
+  findings even when the process exits successfully.
+- Added privacy-safe summaries of two maintainer-controlled downstream
+  engineering workflows, with explicit boundaries against adoption and broad
+  compatibility claims.
+- Added minimal PEP 517 build metadata, source-layout configuration, README,
+  license, and supported-Python package metadata in preparation for a future
+  authorized distribution upload.
+
+This remains a full-functional recovery candidate. These source changes do not
+publish a package, create a release, establish third-party adoption, or replace
+maintainer review.
+
 ## 0.3.0-recovery.4
 
 - Published the accepted-manifest and machine-readable CLI contract hardening

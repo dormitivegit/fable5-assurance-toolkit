@@ -1,0 +1,8 @@
+include VERSION
+graft tests
+graft fixtures
+graft contracts
+graft docs
+graft examples
+global-exclude __pycache__
+global-exclude *.py[cod]

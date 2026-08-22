@@ -28,8 +28,8 @@ class PublicCliTests(unittest.TestCase):
     def test_version(self):
         result = cli("--version")
         self.assertEqual(0, result.returncode)
-        self.assertIn("assurance 0.3.0-recovery.4", result.stdout)
-        self.assertIn("0.3.0rc4", result.stdout)
+        self.assertIn("assurance 0.3.0-recovery.5", result.stdout)
+        self.assertIn("0.3.0rc5", result.stdout)
 
     def test_help_lists_complete_surface(self):
         result = cli("--help")
