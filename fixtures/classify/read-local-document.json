@@ -1,0 +1,11 @@
+{
+  "task_id": "public-read-local-document",
+  "action_class": "read",
+  "target_class": "local_document",
+  "reversibility": "not_applicable",
+  "mutation_requested": false,
+  "production_effect": "none",
+  "credential_or_identity_effect": "read",
+  "authority_effect": "none",
+  "recovery_path": "not_applicable"
+}

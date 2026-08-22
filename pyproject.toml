@@ -23,5 +23,9 @@ classifiers = [
 [project.scripts]
 assurance = "assurance_toolkit.cli:main"
 
+[project.urls]
+Repository = "https://github.com/dormitivegit/fable5-assurance-toolkit"
+Issues = "https://github.com/dormitivegit/fable5-assurance-toolkit/issues"
+
 [tool.setuptools.packages.find]
 where = ["src"]
