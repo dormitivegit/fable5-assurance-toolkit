@@ -26,17 +26,28 @@ assurance --version
 assurance --help
 ```
 
-For a source checkout, run commands from the repository root. To install the
-checkout for development instead of the published prerelease, use:
+The PyPI install above provides the `assurance` CLI. The fixture-backed examples
+below use files from a source checkout; those repository fixtures are not
+included in the wheel. For this prerelease, clone the matching release tag and
+enter the repository root:
 
 ```sh
-python -m pip install .
+git clone --branch v0.3.0-recovery.5 --depth 1 \
+  https://github.com/dormitivegit/fable5-assurance-toolkit.git
+cd fable5-assurance-toolkit
 ```
 
-Run a deterministic governance-pack check against the included fixture:
+Run a deterministic governance-pack check against the checkout fixture:
 
 ```sh
 assurance check fixtures/governance/valid-pack.json --format json
+```
+
+To install the checkout for development instead of the published prerelease,
+use:
+
+```sh
+python -m pip install .
 ```
 
 For authorization-bearing `check`, `guard`, and `closeout` inputs, the caller
