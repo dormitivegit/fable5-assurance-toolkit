@@ -16,6 +16,12 @@ This remains a full-functional recovery candidate. These source changes do not
 publish a package, create a release, establish third-party adoption, or replace
 maintainer review.
 
+Post-publication note (2026-08-23): The `v0.3.0-recovery.5` GitHub release is
+published as a prerelease, and `fable5-assurance-toolkit==0.3.0rc5` is available
+from PyPI. This records publication only; it does not claim production
+readiness, broad compatibility, third-party adoption, canonical promotion, or
+external validation.
+
 ## 0.3.0-recovery.4
 
 - Published the accepted-manifest and machine-readable CLI contract hardening

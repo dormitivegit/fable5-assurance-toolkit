@@ -15,15 +15,22 @@ decisions.
 ## Quick start
 
 FABLE5 requires Python 3.11 or newer and has no non-standard-library Python
-runtime dependencies. For the checkout-based examples below, run commands from
-the repository root. Install it in an isolated environment:
+runtime dependencies. Install the published prerelease in an isolated
+environment:
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install .
+python -m pip install fable5-assurance-toolkit==0.3.0rc5
 assurance --version
 assurance --help
+```
+
+For a source checkout, run commands from the repository root. To install the
+checkout for development instead of the published prerelease, use:
+
+```sh
+python -m pip install .
 ```
 
 Run a deterministic governance-pack check against the included fixture:
@@ -239,10 +246,11 @@ contract, not recovery of historical source bytes, commits, or tags. The
 reconstructed lineage; `v0.3.0-recovery.2` records the subsequent public
 open-source surface hardening; `v0.3.0-recovery.3` generalizes the public
 authorization contract for external maintainers; and `v0.3.0-recovery.4`
-publishes the current contract hardening and consumer guidance. The prepared
-`v0.3.0-recovery.5` release adds first-run navigation, validated
+publishes the current contract hardening and consumer guidance. The published
+`v0.3.0-recovery.5` prerelease adds first-run navigation, validated
 maintainer-controlled workflow summaries, a runnable machine-consumer path,
-and PEP 517 distribution metadata; it does not itself publish a package.
+and PEP 517 distribution metadata. Its Python distribution is available from
+PyPI as `fable5-assurance-toolkit==0.3.0rc5`.
 
 The current status means the six modules and public interface have been
 reconstructed and mechanically tested. Bounded independent review exists for
