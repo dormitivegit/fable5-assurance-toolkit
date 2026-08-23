@@ -1,0 +1,335 @@
+name: FABLE5 Informational Dogfood
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dogfood:
+    name: Published-verifier informational dogfood
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository with base history
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Install the published FABLE5 verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence_dir="$RUNNER_TEMP/fable5-dogfood-evidence"
+          mkdir -p "$evidence_dir"
+          python -m pip install --disable-pip-version-check fable5-assurance-toolkit==0.3.0rc5
+          installed_version="$(python -c 'from importlib.metadata import version; print(version("fable5-assurance-toolkit"))')"
+          test "$installed_version" = "0.3.0rc5"
+          {
+            assurance --version
+            printf 'python-distribution-version: %s\n' "$installed_version"
+          } > "$evidence_dir/identity.txt"
+
+      - name: Execute informational base-to-head dogfood
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          EVENT_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVENT_PUSH_BEFORE: ${{ github.event.before }}
+          EVENT_GITHUB_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          evidence_dir="$RUNNER_TEMP/fable5-dogfood-evidence"
+          manifest="$RUNNER_TEMP/fable5-task236-base-manifest.jsonl"
+          workspace_path="$GITHUB_WORKSPACE"
+          event="$EVENT_NAME"
+          mkdir -p "$evidence_dir"
+
+          case "$event" in
+            pull_request)
+              base_sha="$EVENT_PR_BASE_SHA"
+              head_sha="$EVENT_PR_HEAD_SHA"
+              ;;
+            push)
+              base_sha="$EVENT_PUSH_BEFORE"
+              head_sha="$EVENT_GITHUB_SHA"
+              ;;
+            workflow_dispatch)
+              head_sha="$EVENT_GITHUB_SHA"
+              base_sha="$(git show -s --format=%P "$head_sha" | awk '{print $1}')"
+              ;;
+            *)
+              printf 'unsupported event: %s\n' "$event" >&2
+              exit 1
+              ;;
+          esac
+
+          if [[ -z "$head_sha" ]] || [[ -z "$base_sha" ]] || [[ "$base_sha" =~ ^0{40}$ ]]; then
+            python - "$evidence_dir/decision.json" "$event" "$base_sha" "$head_sha" <<'PY'
+          import json
+          import sys
+
+          path, event, base_sha, head_sha = sys.argv[1:]
+          payload = {
+              "task_id": "TASK236",
+              "mode": "informational_nonblocking",
+              "event": event,
+              "base_sha": base_sha,
+              "head_sha": head_sha,
+              "tool": "fable5-assurance-toolkit==0.3.0rc5",
+              "positive_control_pass": False,
+              "canary": {"landed_proven": False, "ci10_observed": False, "process_exit": None},
+              "ordinary_tests": {"executed": False, "exit": None, "count": None},
+              "head_observation": {
+                  "structured_json_parsed": False,
+                  "process_exit": None,
+                  "result": "BASE_UNAVAILABLE",
+                  "finding_codes": [],
+                  "finding_severities": [],
+              },
+              "observed_decision": "BASE_UNAVAILABLE",
+              "human_review_required": True,
+              "same_workspace_path_used": True,
+              "enforced": False,
+          }
+          with open(path, "w", encoding="utf-8") as handle:
+              json.dump(payload, handle, sort_keys=True, indent=2)
+              handle.write("\n")
+          PY
+            printf '%s\n' 'FABLE5_TASK236=BASE_UNAVAILABLE' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          git cat-file -e "$base_sha^{commit}"
+          git cat-file -e "$head_sha^{commit}"
+          git checkout --detach "$base_sha"
+          test "$(pwd -P)" = "$workspace_path"
+          base_tree="$(git rev-parse "$base_sha^{tree}")"
+          source_path="$workspace_path/src"
+          test -d "$source_path"
+
+          assurance corpus freeze "$source_path" --manifest "$manifest" --format json > /dev/null
+          manifest_sha256="$(sha256sum "$manifest" | awk '{print $1}')"
+
+          set +e
+          assurance corpus verify "$manifest" --accepted-manifest-sha256 "$manifest_sha256" --detect-new --format json > "$evidence_dir/base-positive.json"
+          base_positive_exit=$?
+          set -e
+          python - "$evidence_dir/base-positive.json" "$base_positive_exit" <<'PY'
+          import json
+          import sys
+
+          path, process_exit = sys.argv[1:]
+          with open(path, encoding="utf-8") as handle:
+              payload = json.load(handle)
+          if int(process_exit) != 0 or payload.get("result") != "PASS" or payload.get("findings") != []:
+              raise SystemExit("Task236 positive control is not clean")
+          PY
+
+          canary_path="$source_path/.fable5_task236_canary.py"
+          expected_canary_sha256="49851d4c1e906efa99c03b0127c32197490a0d72be438f188d0dcaf67b32a5ac"
+          printf '%s\n' \
+            '# Task236 ephemeral runner-only canary' \
+            'TASK236_CANARY = "fable5-dogfood"' > "$canary_path"
+          actual_canary_sha256="$(sha256sum "$canary_path" | awk '{print $1}')"
+          test "$actual_canary_sha256" = "$expected_canary_sha256"
+          test -f "$canary_path"
+          {
+            printf 'CANARY_PATH=%s\n' "$canary_path"
+            printf 'CANARY_SHA256=%s\n' "$actual_canary_sha256"
+            printf 'CANARY_PRESENT=YES\n'
+            printf '%s\n' 'CANARY_MACHINE_DECISION=ROUTE_TO_HUMAN_REVIEW'
+          } > "$evidence_dir/canary-proof.txt"
+
+          set +e
+          assurance corpus verify "$manifest" --accepted-manifest-sha256 "$manifest_sha256" --detect-new --format json > "$evidence_dir/canary.json"
+          canary_exit=$?
+          set -e
+          python - "$evidence_dir/canary.json" "$evidence_dir/canary-decision.json" "$canary_exit" <<'PY'
+          import json
+          import sys
+
+          path, decision_path, process_exit = sys.argv[1:]
+          with open(path, encoding="utf-8") as handle:
+              payload = json.load(handle)
+          findings = [(item.get("code"), item.get("severity")) for item in payload.get("findings", [])]
+          if int(process_exit) != 0 or payload.get("result") != "PASS" or findings != [("CI10_NEW_SOURCE_DETECTED", "WARN")]:
+              raise SystemExit("Task236 canary did not produce its expected structured result")
+          with open(decision_path, "w", encoding="utf-8") as handle:
+              json.dump(
+                  {
+                      "observed_decision": "ROUTE_TO_HUMAN_REVIEW",
+                      "human_review_required": True,
+                      "process_exit": int(process_exit),
+                      "finding_codes": ["CI10_NEW_SOURCE_DETECTED"],
+                  },
+                  handle,
+                  sort_keys=True,
+                  indent=2,
+              )
+              handle.write("\n")
+          PY
+
+          rm -f "$canary_path"
+          test ! -e "$canary_path"
+          test -z "$(git status --porcelain)"
+
+          git checkout --detach "$head_sha"
+          test "$(pwd -P)" = "$workspace_path"
+          head_tree="$(git rev-parse "$head_sha^{tree}")"
+
+          set +e
+          PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python -m unittest discover -s tests -v > "$evidence_dir/ordinary-tests.log" 2>&1
+          ordinary_tests_exit=$?
+          set -e
+          ordinary_tests_count="$(sed -nE 's/^Ran ([0-9]+) tests?.*/\1/p' "$evidence_dir/ordinary-tests.log" | tail -n 1)"
+          failed_test_count="$(grep -c '_FailedTest' "$evidence_dir/ordinary-tests.log" || true)"
+
+          set +e
+          assurance corpus verify "$manifest" --accepted-manifest-sha256 "$manifest_sha256" --detect-new --format json > "$evidence_dir/head-observation.json" 2> "$evidence_dir/head-observation.stderr"
+          head_verify_exit=$?
+          set -e
+
+          python - \
+            "$evidence_dir/decision.json" \
+            "$evidence_dir/head-observation.json" \
+            "$event" "$base_sha" "$head_sha" "$base_tree" "$head_tree" "$manifest_sha256" \
+            "$base_positive_exit" "$canary_exit" "$ordinary_tests_exit" "$ordinary_tests_count" "$failed_test_count" "$head_verify_exit" <<'PY'
+          import json
+          import sys
+
+          (
+              decision_path,
+              observation_path,
+              event,
+              base_sha,
+              head_sha,
+              base_tree,
+              head_tree,
+              manifest_sha256,
+              base_positive_exit,
+              canary_exit,
+              ordinary_tests_exit,
+              ordinary_tests_count,
+              failed_test_count,
+              head_verify_exit,
+          ) = sys.argv[1:]
+
+          with open(observation_path, encoding="utf-8") as handle:
+              observation = json.load(handle)
+          findings = observation.get("findings")
+          if not isinstance(findings, list):
+              raise SystemExit("Task236 head observation is not a ModuleResult JSON payload")
+          codes = [item.get("code") for item in findings]
+          severities = [item.get("severity") for item in findings]
+          if not all(isinstance(code, str) for code in codes) or not all(isinstance(severity, str) for severity in severities):
+              raise SystemExit("Task236 head observation has malformed findings")
+
+          ordinary_count = int(ordinary_tests_count) if ordinary_tests_count else None
+          ordinary_green = int(ordinary_tests_exit) == 0 and int(failed_test_count) == 0
+          if not ordinary_green:
+              observed_decision = "ORDINARY_TESTS_NONGREEN"
+              human_review_required = True
+          elif any(severity in {"ERROR", "HOLD"} for severity in severities):
+              observed_decision = "BLOCKING_ACCEPTANCE_EVIDENCE"
+              human_review_required = True
+          elif "CI10_NEW_SOURCE_DETECTED" in codes:
+              observed_decision = "ROUTE_TO_HUMAN_REVIEW"
+              human_review_required = True
+          elif int(head_verify_exit) != 0 or observation.get("result") != "PASS":
+              observed_decision = "INVESTIGATE_NONGREEN"
+              human_review_required = True
+          else:
+              observed_decision = "CONTINUE"
+              human_review_required = False
+
+          payload = {
+              "task_id": "TASK236",
+              "mode": "informational_nonblocking",
+              "event": event,
+              "base_sha": base_sha,
+              "head_sha": head_sha,
+              "base_tree": base_tree,
+              "head_tree": head_tree,
+              "manifest_sha256": manifest_sha256,
+              "tool": "fable5-assurance-toolkit==0.3.0rc5",
+              "positive_control_pass": int(base_positive_exit) == 0,
+              "canary": {
+                  "landed_proven": True,
+                  "ci10_observed": "CI10_NEW_SOURCE_DETECTED" in [
+                      item.get("code") for item in json.load(open(decision_path.replace("decision.json", "canary.json"), encoding="utf-8")).get("findings", [])
+                  ],
+                  "process_exit": int(canary_exit),
+              },
+              "ordinary_tests": {
+                  "executed": True,
+                  "exit": int(ordinary_tests_exit),
+                  "count": ordinary_count,
+                  "failed_test_count": int(failed_test_count),
+              },
+              "head_observation": {
+                  "structured_json_parsed": True,
+                  "process_exit": int(head_verify_exit),
+                  "result": observation.get("result", ""),
+                  "finding_codes": codes,
+                  "finding_severities": severities,
+              },
+              "observed_decision": observed_decision,
+              "human_review_required": human_review_required,
+              "same_workspace_path_used": True,
+              "enforced": False,
+          }
+          with open(decision_path, "w", encoding="utf-8") as handle:
+              json.dump(payload, handle, sort_keys=True, indent=2)
+              handle.write("\n")
+          PY
+
+          python - "$evidence_dir/subject.json" "$event" "$base_sha" "$head_sha" "$base_tree" "$head_tree" "$manifest_sha256" <<'PY'
+          import json
+          import sys
+
+          path, event, base_sha, head_sha, base_tree, head_tree, manifest_sha256 = sys.argv[1:]
+          payload = {
+              "event": event,
+              "base_sha": base_sha,
+              "head_sha": head_sha,
+              "base_tree": base_tree,
+              "head_tree": head_tree,
+              "manifest_sha256": manifest_sha256,
+              "same_workspace_path_used": True,
+          }
+          with open(path, "w", encoding="utf-8") as handle:
+              json.dump(payload, handle, sort_keys=True, indent=2)
+              handle.write("\n")
+          PY
+
+          {
+            printf '%s\n' '## FABLE5 informational dogfood'
+            printf '%s\n' "- Event: \`$event\`"
+            printf '%s\n' "- Base: \`$base_sha\`"
+            printf '%s\n' "- Head: \`$head_sha\`"
+            printf '%s\n' "- Manifest SHA-256: \`$manifest_sha256\`"
+            printf '%s\n' "- Ordinary tests: exit \`$ordinary_tests_exit\`, count \`${ordinary_tests_count:-unparsed}\`"
+            printf '%s\n' "- Observed decision: \`$(python -c 'import json; print(json.load(open("'"$evidence_dir"'/decision.json", encoding="utf-8"))["observed_decision"])')\`"
+            printf '%s\n' '- Enforcement: `false` (informational only)'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload bounded dogfood evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fable5-dogfood-evidence
+          path: ${{ runner.temp }}/fable5-dogfood-evidence
+          if-no-files-found: error
