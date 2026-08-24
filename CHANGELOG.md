@@ -19,6 +19,13 @@ This remains a prerelease full-functional recovery candidate. Local
 prepublication validation does not imply production readiness, broad
 compatibility, external adoption, or human acceptance.
 
+Post-publication note (2026-08-24): `v0.3.0-recovery.6` is published as a
+GitHub prerelease and `fable5-assurance-toolkit==0.3.0rc6` is published on
+PyPI. This publication does not imply production readiness, broad
+compatibility, third-party adoption, or automatic acceptance. The subsequent
+informational dogfood maintenance correction consumes rc6 and supplies an
+explicit expected-root subject assertion.
+
 ## 0.3.0-recovery.5
 
 - Made checkout-first onboarding explicit, added a progressive command map,

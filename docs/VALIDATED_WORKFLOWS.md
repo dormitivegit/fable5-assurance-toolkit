@@ -53,3 +53,27 @@ helps qualify a bounded maintainer decision.
 **What this does not prove.** It does not prove all mixed-language workspaces
 are covered, third-party adoption, broad compatibility, or automatic merge
 authority.
+
+## External-subject falsification experiment — not adoption
+
+This maintainer-executed experiment used the public `pypa/packaging`
+repository, base `4840c3a6817fbd0831f7e520c9a55367472a4a08`, and head
+`55cbf1b9426f44455fa1a9e0836f1fc082cc8452`. GitHub comparison showed the head
+one commit ahead, with changed paths `src/packaging/_ranges.py` and
+`tests/test_ranges.py`; the accepted source change was
+`src/packaging/_ranges.py`.
+
+At both exact revisions, ordinary `pytest` passed. FABLE5 returned `PASS/0` at
+the base and `HOLD/4/CI03_SOURCE_CHANGED` at the head. A wrong-tree
+expected-root control returned `HOLD/4/CI13_EXPECTED_ROOT_MISMATCH`, while the
+legacy no-flag observation returned `PASS/0` using recorded-path semantics.
+Thus ordinary pytest remained green while FABLE5 independently observed the
+accepted source delta, structured evidence routed the change to human review,
+the wrong-tree assertion failed closed, and legacy no-flag behavior remained
+unchanged.
+
+This was executed by the FABLE5 maintainer against a public third-party
+repository subject. The `pypa/packaging` project did not adopt, integrate,
+endorse, or request FABLE5 as part of this experiment. It makes no claim of
+PyPA adoption, broad compatibility, benchmark superiority, production
+readiness, or automated human acceptance.

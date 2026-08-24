@@ -37,3 +37,22 @@ This contract closes the current output/exit side only. A complete
 current-generation input contract for independently reauthoring preserved A1
 cases is not published. A1 remains predecessor-generation evidence and is not
 a current compatibility, adoption, or release-gate authority.
+
+## Trust boundaries
+
+- **Source/workspace control:** FABLE5 can inspect bounded filesystem state; it
+  cannot make an untrusted workspace trustworthy.
+- **Manifest/anchor control:** an accepted manifest SHA-256 binds exact
+  manifest bytes. If one actor controls both a mutable manifest and its anchor,
+  cryptographic identity does not create independent authority.
+- **Subject control:** `--expected-root` compares a caller-declared root with
+  the manifest-declared root before reads. It does not rebind reads or make a
+  manifest portable.
+- **Authority channel:** `--authority-id` and other caller expectations matter
+  only relative to a genuinely separate trusted caller or channel; a string in
+  a validated artifact cannot self-authorize.
+- **Invocation/environment:** the caller chooses the command, profile, input,
+  and execution environment, so output must be interpreted against that
+  invocation.
+- **Human authority:** merge, release, and acceptance remain maintainer
+  decisions.
