@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.0-recovery.6
+
+- Added a repeatable `--expected-root ROOT` option to `corpus verify`. Each
+  supplied root is an assertion compared by index against the manifest
+  header's declared root sequence before recorded-source verification; a
+  count, lexical, real-path, or ordering mismatch returns a blocking
+  `CI13_EXPECTED_ROOT_MISMATCH` integrity HOLD.
+- The option never relocates or rebinds file reads: verification still reads
+  the absolute paths recorded in the manifest, and omitting `--expected-root`
+  preserves the legacy no-flag behavior without binding verification to the
+  caller's working directory, Git metadata, or environment.
+- Refreshed package, runtime, normative CLI output contract, README, and
+  security-status version surfaces to the recovery.6 / 0.3.0rc6 candidate
+  identity.
+
+This remains a prerelease full-functional recovery candidate. Local
+prepublication validation does not imply production readiness, broad
+compatibility, external adoption, or human acceptance.
+
 ## 0.3.0-recovery.5
 
 - Made checkout-first onboarding explicit, added a progressive command map,

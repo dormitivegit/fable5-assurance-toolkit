@@ -242,6 +242,118 @@ class CorpusVerifyTests(CorpusFixtureMixin, unittest.TestCase):
         explicit_none = verify(self.manifest, accepted_manifest_sha256=None).to_dict()
         self.assertEqual(without_option, explicit_none)
 
+    def test_expected_root_omitted_preserves_legacy_wrong_tree_behavior(self):
+        self.freeze()
+        other = self.base / "other"
+        other.mkdir()
+        (other / "a.txt").write_text("changed elsewhere", encoding="utf-8")
+        result = verify(self.manifest).to_dict()
+        self.assertEqual(("PASS", 0), (result["result"], result["exit_code"]))
+
+    def test_matching_expected_root_verifies_normally(self):
+        self.freeze()
+        result = verify(self.manifest, expected_roots=[self.root]).to_dict()
+        self.assertEqual(("PASS", 0), (result["result"], result["exit_code"]))
+
+    def test_wrong_expected_root_holds_before_source_verification(self):
+        self.freeze()
+        other = self.base / "other"
+        other.mkdir()
+        (other / "a.txt").write_text("changed elsewhere", encoding="utf-8")
+        result = verify(self.manifest, expected_roots=[other]).to_dict()
+        codes = [item["code"] for item in result["findings"]]
+        self.assertEqual(("HOLD", 4), (result["result"], result["exit_code"]))
+        self.assertEqual(["CI13_EXPECTED_ROOT_MISMATCH"], codes)
+        self.assertEqual([], result["facts"])
+        self.assertEqual(0, sum(result["counts"].values()))
+
+    def test_recorded_root_assertion_remains_valid_from_another_location(self):
+        self.freeze()
+        unrelated = self.base / "unrelated"
+        unrelated.mkdir()
+        original = os.getcwd()
+        try:
+            os.chdir(unrelated)
+            result = verify(self.manifest, expected_roots=[self.root]).to_dict()
+        finally:
+            os.chdir(original)
+        self.assertEqual(("PASS", 0), (result["result"], result["exit_code"]))
+
+    def test_expected_root_mismatch_short_circuits_missing_recorded_source(self):
+        self.freeze()
+        other = self.base / "other"
+        other.mkdir()
+        self.first.unlink()
+        result = verify(self.manifest, expected_roots=[other]).to_dict()
+        codes = [item["code"] for item in result["findings"]]
+        self.assertEqual(["CI13_EXPECTED_ROOT_MISMATCH"], codes)
+        self.assertNotIn("CI02_SOURCE_MISSING", codes)
+        self.assertEqual([], result["facts"])
+
+    def test_expected_roots_require_exact_multi_root_sequence(self):
+        second = self.base / "second"
+        second.mkdir()
+        (second / "b.txt").write_text("beta", encoding="utf-8")
+        frozen = freeze([self.root, second], [], self.manifest).to_dict()
+        self.assertEqual("PASS", frozen["result"])
+        controls = [
+            ([self.root, second], "PASS", 0),
+            ([second, self.root], "HOLD", 4),
+            ([self.root], "HOLD", 4),
+            ([self.root, second, self.base / "third"], "HOLD", 4),
+        ]
+        for expected, outcome_result, exit_code in controls:
+            with self.subTest(expected=expected):
+                result = verify(self.manifest, expected_roots=expected).to_dict()
+                self.assertEqual((outcome_result, exit_code), (result["result"], result["exit_code"]))
+                if outcome_result == "HOLD":
+                    self.assertIn("CI13_EXPECTED_ROOT_MISMATCH", [item["code"] for item in result["findings"]])
+
+    def test_expected_root_normalization_matches_but_symlink_alias_does_not(self):
+        self.freeze()
+        normalized = self.root / "."
+        matching = verify(self.manifest, expected_roots=[normalized]).to_dict()
+        self.assertEqual(("PASS", 0), (matching["result"], matching["exit_code"]))
+        alias = self.base / "root-alias"
+        alias.symlink_to(self.root, target_is_directory=True)
+        aliased = verify(self.manifest, expected_roots=[alias]).to_dict()
+        self.assertEqual(("HOLD", 4), (aliased["result"], aliased["exit_code"]))
+        evidence = aliased["findings"][0]["evidence"]
+        self.assertIn("LEXICAL_MISMATCH", evidence["mismatch_classes"])
+
+    def test_expected_root_and_accepted_manifest_sha_are_orthogonal(self):
+        self.freeze()
+        accepted = sha256_file(self.manifest)
+        matched = verify(self.manifest, accepted_manifest_sha256=accepted, expected_roots=[self.root]).to_dict()
+        wrong_sha = verify(self.manifest, accepted_manifest_sha256="0" * 64, expected_roots=[self.root]).to_dict()
+        wrong_both = verify(self.manifest, accepted_manifest_sha256="0" * 64, expected_roots=[self.base / "other"]).to_dict()
+        self.assertEqual(("PASS", 0), (matched["result"], matched["exit_code"]))
+        self.assertIn("CI11_ACCEPTED_MANIFEST_MISMATCH", [item["code"] for item in wrong_sha["findings"]])
+        self.assertEqual(["CI11_ACCEPTED_MANIFEST_MISMATCH", "CI13_EXPECTED_ROOT_MISMATCH"], [item["code"] for item in wrong_both["findings"]])
+
+    def test_detect_new_runs_only_after_matching_expected_root(self):
+        self.freeze()
+        (self.root / "new.txt").write_text("new", encoding="utf-8")
+        matching = verify(self.manifest, detect_new=True, expected_roots=[self.root]).to_dict()
+        mismatching = verify(self.manifest, detect_new=True, expected_roots=[self.base / "other"]).to_dict()
+        self.assertIn("CI10_NEW_SOURCE_DETECTED", [item["code"] for item in matching["findings"]])
+        self.assertEqual(["CI13_EXPECTED_ROOT_MISMATCH"], [item["code"] for item in mismatching["findings"]])
+
+    def test_expected_root_with_malformed_header_roots_fails_closed(self):
+        self.freeze()
+        records = read_jsonl(self.manifest)
+        records[0]["real_roots"] = []
+        self.write_records(self.manifest, records)
+        result = verify(self.manifest, expected_roots=[self.root]).to_dict()
+        self.assertEqual(("HOLD", 4), (result["result"], result["exit_code"]))
+        self.assertIn("CI09_MALFORMED_MANIFEST", [item["code"] for item in result["findings"]])
+        self.assertNotIn("CI13_EXPECTED_ROOT_MISMATCH", [item["code"] for item in result["findings"]])
+
+    def test_same_workspace_root_remains_a_matching_assertion(self):
+        self.freeze()
+        result = verify(self.manifest, expected_roots=[self.root]).to_dict()
+        self.assertEqual(("PASS", 0), (result["result"], result["exit_code"]))
+
     def test_malformed_accepted_manifest_sha_is_input_failure(self):
         self.freeze()
         result = verify(self.manifest, accepted_manifest_sha256="0" * 63).to_dict()

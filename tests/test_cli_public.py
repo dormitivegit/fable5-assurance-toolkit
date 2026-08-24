@@ -28,8 +28,8 @@ class PublicCliTests(unittest.TestCase):
     def test_version(self):
         result = cli("--version")
         self.assertEqual(0, result.returncode)
-        self.assertIn("assurance 0.3.0-recovery.5", result.stdout)
-        self.assertIn("0.3.0rc5", result.stdout)
+        self.assertIn("assurance 0.3.0-recovery.6", result.stdout)
+        self.assertIn("0.3.0rc6", result.stdout)
 
     def test_help_lists_complete_surface(self):
         result = cli("--help")
@@ -137,6 +137,23 @@ class PublicCliTests(unittest.TestCase):
             checked = cli("corpus", "verify", str(manifest), "--format", "json")
             self.assertEqual(0, frozen.returncode)
             self.assertEqual(0, checked.returncode)
+
+    def test_corpus_expected_root_is_repeatable_and_public(self):
+        self.assertIn("--expected-root", cli("corpus", "verify", "--help").stdout)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "root"
+            other = Path(temporary) / "other"
+            root.mkdir()
+            other.mkdir()
+            (root / "file").write_text("bytes", encoding="utf-8")
+            manifest = Path(temporary) / "manifest.jsonl"
+            frozen = cli("corpus", "freeze", str(root), "--manifest", str(manifest), "--format", "json")
+            matched = cli("corpus", "verify", str(manifest), "--expected-root", str(root), "--format", "json", cwd=other)
+            mismatched = cli("corpus", "verify", str(manifest), "--expected-root", str(other), "--format", "json", cwd=other)
+        self.assertEqual(0, frozen.returncode)
+        self.assertEqual(0, matched.returncode)
+        self.assertEqual(4, mismatched.returncode)
+        self.assertIn("CI13_EXPECTED_ROOT_MISMATCH", mismatched.stdout)
 
     def test_handoff_public_cli(self):
         result = cli("handoff", "fixtures/handoff/valid-observation.json", "--carrier", "direct-v1-ax1-ax2", "--format", "json")

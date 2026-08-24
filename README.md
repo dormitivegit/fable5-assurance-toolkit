@@ -15,13 +15,12 @@ decisions.
 ## Quick start
 
 FABLE5 requires Python 3.11 or newer and has no non-standard-library Python
-runtime dependencies. Install the published prerelease in an isolated
-environment:
+runtime dependencies. Install the prerelease in an isolated environment:
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install fable5-assurance-toolkit==0.3.0rc5
+python -m pip install fable5-assurance-toolkit==0.3.0rc6
 assurance --version
 assurance --help
 ```
@@ -32,7 +31,7 @@ included in the wheel. For this prerelease, clone the matching release tag and
 enter the repository root:
 
 ```sh
-git clone --branch v0.3.0-recovery.5 --depth 1 \
+git clone --branch v0.3.0-recovery.6 --depth 1 \
   https://github.com/dormitivegit/fable5-assurance-toolkit.git
 cd fable5-assurance-toolkit
 ```
@@ -100,6 +99,21 @@ assurance corpus verify MANIFEST \
 The accepted SHA-256 is caller supplied. It anchors the exact manifest bytes
 and therefore the recorded scope declaration; it does not prove that the
 chosen roots or exclusions are complete, optimal, or authorized.
+
+When a caller needs to assert the specific recorded subject before source
+verification, it can repeat `--expected-root ROOT` in manifest-root order:
+
+```sh
+assurance corpus verify MANIFEST --expected-root ROOT [--expected-root ROOT ...]
+```
+
+Each supplied root is normalized with the same lexical and real-path identity
+model used by PM-04, then compared by index with the manifest header's recorded
+`roots` and `real_roots`. A count, lexical, real-path, or ordering mismatch
+returns `CI13_EXPECTED_ROOT_MISMATCH` as an integrity-family `HOLD` (exit `4`)
+before PM-04 reads recorded source paths. Omitting the option preserves legacy
+recorded-path verification; the CLI never infers expected roots from CWD, Git,
+or the manifest location.
 
 Corpus manifests bind sources to the absolute filesystem paths recorded at
 freeze time. Verification expects those paths to keep identifying the intended
@@ -243,8 +257,8 @@ production. Those decisions remain with people responsible for the project.
 ## Project status and provenance
 
 ```text
-PRODUCT_VERSION=0.3.0-recovery.5
-PYTHON_DISTRIBUTION_VERSION=0.3.0rc5
+PRODUCT_VERSION=0.3.0-recovery.6
+PYTHON_DISTRIBUTION_VERSION=0.3.0rc6
 STATUS=full-functional-recovery-candidate
 LINEAGE_ID=FABLE5-ASSURANCE-TOOLKIT-FULL-FUNCTIONAL-RECOVERY-20260713
 ```
@@ -261,7 +275,12 @@ publishes the current contract hardening and consumer guidance. The published
 `v0.3.0-recovery.5` prerelease adds first-run navigation, validated
 maintainer-controlled workflow summaries, a runnable machine-consumer path,
 and PEP 517 distribution metadata. Its Python distribution is available from
-PyPI as `fable5-assurance-toolkit==0.3.0rc5`.
+PyPI as `fable5-assurance-toolkit==0.3.0rc5`. The `0.3.0-recovery.6`
+candidate adds the explicit expected-root subject assertion to
+`corpus verify`: a caller can require the manifest-declared root sequence
+before recorded-source verification. Omitting `--expected-root` preserves
+legacy behavior, and manifests remain bound to the absolute paths recorded at
+freeze time; they are not portable or rebindable.
 
 The current status means the six modules and public interface have been
 reconstructed and mechanically tested. Bounded independent review exists for

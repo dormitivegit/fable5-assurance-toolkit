@@ -114,7 +114,7 @@ class CliOutputContractTests(unittest.TestCase):
     def test_contract_identity_structure_and_deterministic_encoding(self):
         self.assertEqual("cli-output-contract/v2", self.contract["schema_version"])
         self.assertEqual(
-            "FABLE5_CLI_OUTPUT_AND_EXIT_CONTRACT_20260820",
+            "FABLE5_CLI_OUTPUT_AND_EXIT_CONTRACT_20260823",
             self.contract["contract_id"],
         )
         self.assertTrue(self.contract["normative"])

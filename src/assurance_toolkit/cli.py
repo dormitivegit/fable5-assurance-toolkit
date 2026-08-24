@@ -114,6 +114,7 @@ def build_parser() -> argparse.ArgumentParser:
     verify_parser = corpus_commands.add_parser("verify")
     verify_parser.add_argument("manifest")
     verify_parser.add_argument("--accepted-manifest-sha256", metavar="SHA256")
+    verify_parser.add_argument("--expected-root", action="append", default=None, metavar="ROOT", help="assert a manifest root by index")
     verify_parser.add_argument("--detect-new", action="store_true")
     verify_parser.add_argument("--format", choices=("text", "json"), default="text")
 
@@ -182,6 +183,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.manifest,
                 args.detect_new,
                 accepted_manifest_sha256=args.accepted_manifest_sha256,
+                expected_roots=args.expected_root,
             ).to_dict()
         elif args.command == "handoff":
             payload = validate_handoff(args.file, args.carrier, args.profile).to_dict()

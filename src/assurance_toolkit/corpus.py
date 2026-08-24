@@ -246,6 +246,7 @@ def verify(
     manifest_path: str | Path,
     detect_new: bool = False,
     accepted_manifest_sha256: str | None = None,
+    expected_roots: list[str | Path] | None = None,
 ) -> ModuleResult:
     findings = []
     manifest = Path(manifest_path)
@@ -307,6 +308,67 @@ def verify(
             findings.append(finding("IN02_UNSUPPORTED_VERSION", "ERROR", str(manifest), f"line {index}", "unsupported manifest schema version", record.get("schema_version")))
         if record.get("record_type") not in {"manifest_header", "source_record", "duplicate_group", "manifest_summary"}:
             findings.append(finding("CI09_MALFORMED_MANIFEST", "ERROR", str(manifest), f"line {index}", "unknown manifest record type", record.get("record_type")))
+
+    if expected_roots is not None:
+        roots = header.get("roots") if header else None
+        real_roots = header.get("real_roots") if header else None
+        header_is_supported = (
+            bool(header)
+            and header.get("schema_version") == SCHEMA_VERSION
+            and header.get("rule_version") == RULE_VERSION
+        )
+        roots_are_valid = (
+            isinstance(roots, list)
+            and isinstance(real_roots, list)
+            and all(isinstance(item, str) for item in roots)
+            and all(isinstance(item, str) for item in real_roots)
+            and len(roots) == len(real_roots)
+        )
+        if not header_is_supported or not roots_are_valid:
+            if header_is_supported and not roots_are_valid:
+                findings.append(finding(
+                    "CI09_MALFORMED_MANIFEST",
+                    "ERROR",
+                    str(manifest),
+                    "manifest_header.roots",
+                    "expected-root assertion requires equally sized string roots and real_roots arrays",
+                    {"roots_type": type(roots).__name__, "real_roots_type": type(real_roots).__name__},
+                ))
+            sorted_items = sort_findings(findings)
+            result, exit_code = outcome(sorted_items, "normal", family="integrity")
+            return ModuleResult(result, MODULE_ID, rule_set_version=RULE_VERSION, findings=sorted_items, facts=[], exit_code=exit_code, data={"counts": {name.lower(): 0 for name in ("MATCH", "MISSING", "CHANGED", "TYPE_CHANGED", "SELF_INGESTED")}, "detect_new": detect_new})
+
+        expected_forms = [_path_forms(Path(item)) for item in expected_roots]
+        expected_lexical = [str(lexical) for lexical, _ in expected_forms]
+        expected_real = [str(real) for _, real in expected_forms]
+        mismatch_classes = []
+        if len(expected_lexical) != len(roots):
+            mismatch_classes.append("CARDINALITY_MISMATCH")
+        else:
+            if expected_lexical != roots:
+                mismatch_classes.append("LEXICAL_MISMATCH")
+            if expected_real != real_roots:
+                mismatch_classes.append("REAL_ROOT_MISMATCH")
+            expected_pairs = list(zip(expected_lexical, expected_real))
+            recorded_pairs = list(zip(roots, real_roots))
+            if expected_pairs != recorded_pairs and sorted(expected_pairs) == sorted(recorded_pairs):
+                mismatch_classes.append("ORDER_MISMATCH")
+        if mismatch_classes:
+            findings.append(finding(
+                "CI13_EXPECTED_ROOT_MISMATCH",
+                "HOLD",
+                str(manifest),
+                "expected_root",
+                "caller expected roots do not match the manifest-declared root identities",
+                {
+                    "mismatch_classes": mismatch_classes,
+                    "expected": {"roots": expected_lexical, "real_roots": expected_real},
+                    "recorded": {"roots": roots, "real_roots": real_roots},
+                },
+            ))
+            sorted_items = sort_findings(findings)
+            result, exit_code = outcome(sorted_items, "normal", family="integrity")
+            return ModuleResult(result, MODULE_ID, rule_set_version=RULE_VERSION, findings=sorted_items, facts=[], exit_code=exit_code, data={"counts": {name.lower(): 0 for name in ("MATCH", "MISSING", "CHANGED", "TYPE_CHANGED", "SELF_INGESTED")}, "detect_new": detect_new})
 
     exclusions = [Path(value) for value in header.get("exclusions", []) if isinstance(value, str)]
     states: list[dict[str, Any]] = []

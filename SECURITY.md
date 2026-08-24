@@ -22,7 +22,7 @@ publishes no guaranteed response or remediation SLA.
 
 ## Current security-support status
 
-FABLE5 `0.3.0-recovery.5` has
+FABLE5 `0.3.0-recovery.6` has
 `STATUS=full-functional-recovery-candidate`. Its implemented public interface
 has mechanical test coverage, and the current contract/runtime correction has
 received bounded independent review. This is not comprehensive independent
