@@ -37,3 +37,21 @@
   needed for independent A1 reauthoring is not published.
 - A1 is preserved as predecessor-generation evidence only. It does not provide
   a current release gate, compatibility claim, or adoption claim.
+
+## What FABLE5 does not prove
+
+FABLE5 does not prove business truth, human authorization by itself, scope
+completeness, independent provenance merely from a hash, cross-layout subject
+identity unless it is explicitly and correctly bound, portable manifest
+rebinding, production readiness, merge or release approval, or external
+adoption.
+
+## When FABLE5 may be the wrong tool
+
+FABLE5 may be the wrong tool when ordinary tests and review already answer the
+full acceptance question and no independent deterministic evidence is needed;
+when portable cross-machine or cross-layout manifests are required; when the
+same mutable actor controls source, manifest, anchor, and authority channel
+without an independent trust boundary; when automatic hosted enforcement or
+auto-merge is required from FABLE5 itself; or when broad semantic or business
+correctness is the desired output.

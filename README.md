@@ -25,6 +25,42 @@ assurance --version
 assurance --help
 ```
 
+### Minimal PyPI-only corpus demo
+
+This demo needs only the installed package. It creates a disposable source
+directory, freezes a manifest outside that source root, changes one source
+file, and confirms that verification reports the expected source-change HOLD.
+
+```sh
+demo_dir="$(mktemp -d)"
+source_dir="$demo_dir/source"
+manifest="$demo_dir/accepted-manifest.jsonl"
+mkdir -p "$source_dir"
+printf '%s\n' 'value = 1' > "$source_dir/example.py"
+assurance corpus freeze "$source_dir" --manifest "$manifest" --format json
+manifest_sha256="$(python - "$manifest" <<'PY'
+import hashlib
+import pathlib
+import sys
+
+print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())
+PY
+)"
+printf '%s\n' 'value = 2' > "$source_dir/example.py"
+set +e
+assurance corpus verify "$manifest" \
+  --accepted-manifest-sha256 "$manifest_sha256" \
+  --expected-root "$source_dir" \
+  --format json
+demo_exit=$?
+set -e
+test "$demo_exit" -eq 4  # CI03_SOURCE_CHANGED integrity HOLD
+rm -rf "$demo_dir"
+```
+
+The JSON finding is the decision input: the expected `CI03_SOURCE_CHANGED`
+HOLD is not an authorization to accept or reject the change.
+
 The PyPI install above provides the `assurance` CLI. The fixture-backed examples
 below use files from a source checkout; those repository fixtures are not
 included in the wheel. For this prerelease, clone the matching release tag and
@@ -87,6 +123,11 @@ Use `--format json` when another tool or AI agent will consume the result. Run
 The commands report bounded evidence. They do not authorize a change, decide a
 merge, or replace human review.
 
+For `guard`, `--executor` must match the state/input's authorized executor
+when that predicate applies. Guard target paths fail closed when traversal or
+a symlinked parent makes their identity ambiguous. For `handoff`, the current
+carrier values are `direct-v1-ax1-ax2` and `skill-v1-candidate-ax1-ax2`.
+
 For an already accepted corpus manifest, bind verification to its exact raw
 bytes as well as its semantic records:
 
@@ -121,6 +162,13 @@ sources; a manifest is not a portable "freeze on one machine, verify under a
 different layout" artifact. Manifests also disclose absolute paths and
 per-file hashes, so do not publish sensitive manifests verbatim or freeze
 credential-bearing roots.
+
+Manifest bytes and hashes are not authority by themselves. A caller-supplied
+`--expected-root` is a subject assertion, not portable rebinding or
+authorization, and human acceptance remains separate. See
+[Architecture](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/ARCHITECTURE.md)
+and [limitations](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/LIMITATIONS_AND_FUTURE_SEAMS.md)
+for the trust boundaries.
 
 `--exclude` uses path containment/prefix semantics, not shell glob matching.
 With `--detect-new`, current normal verification reports
@@ -197,6 +245,24 @@ from `corpus verify --detect-new`, and takes a review branch when a nonblocking
 `WARN` finding is present even though the process exit is `0`. It demonstrates
 why a consumer must inspect structured findings rather than branch on exit
 status alone. See the [machine-consumer guide](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/examples/machine-consumer/README.md).
+
+## Minimal CI and agent decision pattern
+
+Use ordinary tests and tools first, then run the bounded FABLE5 deterministic
+check, parse its structured findings and exit semantics, route the result to
+CI, an agent, or a reviewer, and retain human acceptance as the final step.
+Exit status alone is insufficient when nonblocking `WARN` findings are present.
+
+## Comparison boundary
+
+| Tool or role | Answers |
+| --- | --- |
+| ordinary tests | behavior under the exercised test suite |
+| `git diff` | revision-tracked changed paths and lines |
+| FABLE5 | bounded contract and accepted-subject evidence |
+| human review | intent, admissibility, authorization, and acceptance |
+
+These are complementary scopes; none replaces the others.
 
 ## Modules
 
@@ -280,7 +346,9 @@ candidate adds the explicit expected-root subject assertion to
 `corpus verify`: a caller can require the manifest-declared root sequence
 before recorded-source verification. Omitting `--expected-root` preserves
 legacy behavior, and manifests remain bound to the absolute paths recorded at
-freeze time; they are not portable or rebindable.
+freeze time; they are not portable or rebindable. The current published
+prerelease is `fable5-assurance-toolkit==0.3.0rc6`; the recovery.5 publication
+remains historical context rather than the current PyPI subject.
 
 The current status means the six modules and public interface have been
 reconstructed and mechanically tested. Bounded independent review exists for

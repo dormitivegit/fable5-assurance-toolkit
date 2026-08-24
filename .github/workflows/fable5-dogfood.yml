@@ -32,9 +32,9 @@ jobs:
           set -euo pipefail
           evidence_dir="$RUNNER_TEMP/fable5-dogfood-evidence"
           mkdir -p "$evidence_dir"
-          python -m pip install --disable-pip-version-check fable5-assurance-toolkit==0.3.0rc5
+          python -m pip install --disable-pip-version-check fable5-assurance-toolkit==0.3.0rc6
           installed_version="$(python -c 'from importlib.metadata import version; print(version("fable5-assurance-toolkit"))')"
-          test "$installed_version" = "0.3.0rc5"
+          test "$installed_version" = "0.3.0rc6"
           {
             assurance --version
             printf 'python-distribution-version: %s\n' "$installed_version"
@@ -88,7 +88,7 @@ jobs:
               "event": event,
               "base_sha": base_sha,
               "head_sha": head_sha,
-              "tool": "fable5-assurance-toolkit==0.3.0rc5",
+              "tool": "fable5-assurance-toolkit==0.3.0rc6",
               "positive_control_pass": False,
               "canary": {"landed_proven": False, "ci10_observed": False, "process_exit": None},
               "ordinary_tests": {"executed": False, "exit": None, "count": None},
@@ -124,7 +124,7 @@ jobs:
           manifest_sha256="$(sha256sum "$manifest" | awk '{print $1}')"
 
           set +e
-          assurance corpus verify "$manifest" --accepted-manifest-sha256 "$manifest_sha256" --detect-new --format json > "$evidence_dir/base-positive.json"
+          assurance corpus verify "$manifest" --accepted-manifest-sha256 "$manifest_sha256" --expected-root "$source_path" --detect-new --format json > "$evidence_dir/base-positive.json"
           base_positive_exit=$?
           set -e
           python - "$evidence_dir/base-positive.json" "$base_positive_exit" <<'PY'
@@ -154,7 +154,7 @@ jobs:
           } > "$evidence_dir/canary-proof.txt"
 
           set +e
-          assurance corpus verify "$manifest" --accepted-manifest-sha256 "$manifest_sha256" --detect-new --format json > "$evidence_dir/canary.json"
+          assurance corpus verify "$manifest" --accepted-manifest-sha256 "$manifest_sha256" --expected-root "$source_path" --detect-new --format json > "$evidence_dir/canary.json"
           canary_exit=$?
           set -e
           python - "$evidence_dir/canary.json" "$evidence_dir/canary-decision.json" "$canary_exit" <<'PY'
@@ -198,7 +198,7 @@ jobs:
           failed_test_count="$(grep -c '_FailedTest' "$evidence_dir/ordinary-tests.log" || true)"
 
           set +e
-          assurance corpus verify "$manifest" --accepted-manifest-sha256 "$manifest_sha256" --detect-new --format json > "$evidence_dir/head-observation.json" 2> "$evidence_dir/head-observation.stderr"
+          assurance corpus verify "$manifest" --accepted-manifest-sha256 "$manifest_sha256" --expected-root "$source_path" --detect-new --format json > "$evidence_dir/head-observation.json" 2> "$evidence_dir/head-observation.stderr"
           head_verify_exit=$?
           set -e
 
@@ -264,7 +264,7 @@ jobs:
               "base_tree": base_tree,
               "head_tree": head_tree,
               "manifest_sha256": manifest_sha256,
-              "tool": "fable5-assurance-toolkit==0.3.0rc5",
+              "tool": "fable5-assurance-toolkit==0.3.0rc6",
               "positive_control_pass": int(base_positive_exit) == 0,
               "canary": {
                   "landed_proven": True,
