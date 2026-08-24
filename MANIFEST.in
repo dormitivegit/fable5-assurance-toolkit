@@ -1,5 +1,7 @@
 include VERSION
 graft tests
+# Repository-only CI surface; depends on .github metadata not shipped in the sdist.
+exclude tests/test_repository_surface.py
 graft fixtures
 graft contracts
 graft docs
