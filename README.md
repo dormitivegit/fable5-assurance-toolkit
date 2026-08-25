@@ -176,6 +176,10 @@ With `--detect-new`, current normal verification reports
 still exits `0`. Consumers that need new-file gating must inspect structured
 findings as well as the process exit status.
 
+Profiles are exposed only by `classify`, `check`, `handoff`, and `closeout`.
+`--profile strict` is not available for `corpus verify`, which always reports
+the current normal-profile corpus decision semantics.
+
 ## CLI output and exit contract
 
 The normative, machine-readable contract is
@@ -194,12 +198,13 @@ particular, parse-failure JSON uses the command string as `module_id` and
 | 4 | integrity-family HOLD |
 | 5 | terminal/target-family HOLD |
 
-For structured module outcomes, finding severity first determines whether the
-outcome is blocking: `ERROR` and `HOLD` block, while `WARN` and `INFO` do not
-block under the normal profile. `--profile strict` can promote `WARN` to
-effective blocking for the final decision without changing the serialized
-finding's severity label. A non-blocking finding does not select a nonzero exit
-solely because its prefix belongs to an exit family.
+For structured module outcomes from commands that expose a `--profile` option,
+finding severity first determines whether the outcome is blocking: `ERROR` and
+`HOLD` block, while `WARN` and `INFO` do not block under the normal profile.
+`--profile strict` can promote `WARN` to effective blocking for the final
+decision without changing the serialized finding's severity label. A
+non-blocking finding does not select a nonzero exit solely because its prefix
+belongs to an exit family.
 
 For effectively blocking module outcomes, PM-03 normally applies the
 terminal-family exit floor/pin and PM-04 normally applies the integrity-family
