@@ -495,6 +495,7 @@ class CliOutputContractTests(unittest.TestCase):
             pack = json.loads((REPOSITORY / "fixtures" / "governance" / "valid-pack.json").read_text(encoding="utf-8"))
             pack["actions"][0].update({"executed": True, "mutates": True, "authorization_ref": "DEC-001"})
             path = Path(temporary) / "hold.json"
+            (Path(temporary) / "source.txt").write_bytes((REPOSITORY / "fixtures" / "governance" / "source.txt").read_bytes())
             path.write_text(json.dumps(pack), encoding="utf-8")
             completed = cli("check", str(path), "--format", "json")
         self.assertEqual(self.exit_for("generic_hold"), completed.returncode)

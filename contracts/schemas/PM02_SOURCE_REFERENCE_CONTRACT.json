@@ -1,0 +1,25 @@
+{
+  "schema_version": "pm02-source-reference-contract/v1",
+  "module_id": "PM-02",
+  "public_interface": "assurance check",
+  "file_backed_pack": {
+    "absolute_source_identity_path": "use the supplied absolute path",
+    "relative_source_identity_path": "resolve against the filesystem parent of the pack file",
+    "normalization": "normalize the pack parent and resolve the referenced exact target before applying existing SHA-256 and location checks"
+  },
+  "stdin_pack": {
+    "absolute_source_identity_path": "use the supplied absolute path",
+    "relative_source_identity_path": "fail closed with an explicit input/reference error because no pack filesystem parent exists",
+    "forbidden_fallbacks": [
+      "process current working directory",
+      "repository root",
+      "inferred source base"
+    ]
+  },
+  "preserved_semantics": [
+    "absolute source paths",
+    "exact SHA-256 comparison",
+    "exact location validation",
+    "symlink rejection"
+  ]
+}

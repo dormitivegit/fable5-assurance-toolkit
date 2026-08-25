@@ -30,6 +30,9 @@ assurance --help
 This demo needs only the installed package. It creates a disposable source
 directory, freezes a manifest outside that source root, changes one source
 file, and confirms that verification reports the expected source-change HOLD.
+The freeze JSON already reports the manifest digest in `facts[].manifest_sha256`.
+The snippet independently recomputes it from the manifest bytes so the
+acceptance anchor does not rely only on the freeze operation's self-report.
 
 ```sh
 demo_dir="$(mktemp -d)"
@@ -47,13 +50,14 @@ print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())
 PY
 )"
 printf '%s\n' 'value = 2' > "$source_dir/example.py"
-set +e
-assurance corpus verify "$manifest" \
-  --accepted-manifest-sha256 "$manifest_sha256" \
-  --expected-root "$source_dir" \
-  --format json
-demo_exit=$?
-set -e
+if assurance corpus verify "$manifest" \
+    --accepted-manifest-sha256 "$manifest_sha256" \
+    --expected-root "$source_dir" \
+    --format json; then
+  demo_exit=0
+else
+  demo_exit=$?
+fi
 test "$demo_exit" -eq 4  # CI03_SOURCE_CHANGED integrity HOLD
 rm -rf "$demo_dir"
 ```
@@ -91,6 +95,11 @@ trailing whitespace is ignored; the remaining identifier is compared exactly
 and case-sensitively. This is an out-of-band caller input; the document being
 validated cannot set or override it. Read-only validation does not require an
 authority ID.
+
+The normative embedded-source reference base for `check` is defined in
+[`contracts/schemas/PM02_SOURCE_REFERENCE_CONTRACT.json`](contracts/schemas/PM02_SOURCE_REFERENCE_CONTRACT.json).
+File-backed packs resolve relative source paths from the pack's directory;
+stdin packs require absolute source paths.
 
 For repository-only development without installation, use:
 
@@ -257,6 +266,11 @@ Use ordinary tests and tools first, then run the bounded FABLE5 deterministic
 check, parse its structured findings and exit semantics, route the result to
 CI, an agent, or a reviewer, and retain human acceptance as the final step.
 Exit status alone is insufficient when nonblocking `WARN` findings are present.
+`result` is `PASS` whenever no finding is effectively blocking; `WARN`
+findings do not change `result`. Iterate `findings[]`.
+
+On exit `2`, stdout may be empty; treat empty stdout on exit `2` as an
+invocation error, not a finding.
 
 ## Comparison boundary
 
@@ -327,41 +341,7 @@ production. Those decisions remain with people responsible for the project.
 
 ## Project status and provenance
 
-```text
-PRODUCT_VERSION=0.3.0-recovery.6
-PYTHON_DISTRIBUTION_VERSION=0.3.0rc6
-STATUS=full-functional-recovery-candidate
-LINEAGE_ID=FABLE5-ASSURANCE-TOOLKIT-FULL-FUNCTIONAL-RECOVERY-20260713
-```
-
-This repository is a clean-room functional reconstruction under a new Git
-lineage, based on accepted architecture, contracts, sanitized fixtures, tests,
-and pilot requirements. It claims continuity of the accepted functional
-contract, not recovery of historical source bytes, commits, or tags. The
-`v0.3.0-recovery.1` tag identifies the first recovery candidate in the
-reconstructed lineage; `v0.3.0-recovery.2` records the subsequent public
-open-source surface hardening; `v0.3.0-recovery.3` generalizes the public
-authorization contract for external maintainers; and `v0.3.0-recovery.4`
-publishes the current contract hardening and consumer guidance. The published
-`v0.3.0-recovery.5` prerelease adds first-run navigation, validated
-maintainer-controlled workflow summaries, a runnable machine-consumer path,
-and PEP 517 distribution metadata. Its Python distribution is available from
-PyPI as `fable5-assurance-toolkit==0.3.0rc5`. The `0.3.0-recovery.6`
-candidate adds the explicit expected-root subject assertion to
-`corpus verify`: a caller can require the manifest-declared root sequence
-before recorded-source verification. Omitting `--expected-root` preserves
-legacy behavior, and manifests remain bound to the absolute paths recorded at
-freeze time; they are not portable or rebindable. The current published
-prerelease is `fable5-assurance-toolkit==0.3.0rc6`; the recovery.5 publication
-remains historical context rather than the current PyPI subject.
-
-The current status means the six modules and public interface have been
-reconstructed and mechanically tested. Bounded independent review exists for
-the current contract/runtime correction; this is not a claim of comprehensive
-independent review, user acceptance, external validation, canonical promotion,
-production readiness, or ecosystem adoption. See
-[status semantics](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/STATUS_SEMANTICS.md) and
-[recovery lineage](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/RECOVERY_LINEAGE.md) for the precise claims.
+See [recovery lineage](docs/RECOVERY_LINEAGE.md) for status, provenance, and claim boundaries.
 
 ## Contributing
 

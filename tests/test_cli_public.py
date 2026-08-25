@@ -83,6 +83,7 @@ class PublicCliTests(unittest.TestCase):
             pack = json.loads((REPOSITORY / "fixtures/governance/valid-pack.json").read_text(encoding="utf-8"))
             pack["actions"][0].update({"executed": True, "mutates": True, "authorization_ref": "DEC-001"})
             path = Path(temporary) / "pack.json"
+            (Path(temporary) / "source.txt").write_bytes((REPOSITORY / "fixtures/governance/source.txt").read_bytes())
             path.write_text(json.dumps(pack), encoding="utf-8")
             matched = cli("check", str(path), "--authority-id", "PROJECT_AUTHORITY", "--format", "json")
             mismatched = cli("check", str(path), "--authority-id", "OTHER_AUTHORITY", "--format", "json")
