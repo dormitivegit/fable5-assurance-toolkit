@@ -58,9 +58,19 @@ class RepositorySurfaceTests(unittest.TestCase):
         with (REPOSITORY_ROOT / "pyproject.toml").open("rb") as handle:
             project_version = tomllib.load(handle)["project"]["version"]
         product_version = (REPOSITORY_ROOT / "VERSION").read_text(encoding="utf-8").strip()
+        recovery_lineage = (REPOSITORY_ROOT / "docs" / "RECOVERY_LINEAGE.md").read_text(
+            encoding="utf-8"
+        )
 
         self.assertEqual(PYTHON_DISTRIBUTION_VERSION, project_version)
         self.assertEqual(PRODUCT_VERSION, product_version)
+        self.assertIn(
+            "## Project status and provenance\n\n"
+            "```text\n"
+            f"PRODUCT_VERSION={PRODUCT_VERSION}\n"
+            f"PYTHON_DISTRIBUTION_VERSION={PYTHON_DISTRIBUTION_VERSION}\n",
+            recovery_lineage,
+        )
 
     def test_readme_scopes_strict_profile_to_commands_that_expose_it(self) -> None:
         readme = (REPOSITORY_ROOT / "README.md").read_text(encoding="utf-8")
