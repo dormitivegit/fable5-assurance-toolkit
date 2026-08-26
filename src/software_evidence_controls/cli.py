@@ -80,7 +80,7 @@ def _parse_failure(command: str, exc: Exception) -> tuple[dict[str, Any], int]:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="software-evidence-controls",
-        description="Software Evidence Controls local deterministic assurance toolkit",
+        description="Local deterministic CLI for evidence controls; no third-party dependencies",
     )
     parser.add_argument("--version", action="store_true", help="show product and Python distribution versions")
     commands = parser.add_subparsers(dest="command")

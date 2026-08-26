@@ -296,7 +296,7 @@
           ],
           "stdout_contains": [
             "usage: software-evidence-controls",
-            "Software Evidence Controls local deterministic assurance toolkit"
+            "Local deterministic CLI for evidence controls; no third-party dependencies"
           ]
         },
         "version": {
