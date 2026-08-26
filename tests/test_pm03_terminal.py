@@ -4,9 +4,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from assurance_toolkit.identities import file_identity
-from assurance_toolkit.io_utils import sha256_bytes
-from assurance_toolkit.terminal import preflight
+from software_evidence_controls.identities import file_identity
+from software_evidence_controls.io_utils import sha256_bytes
+from software_evidence_controls.terminal import preflight
 
 
 DEFAULT_AUTHORITY = "PROJECT_AUTHORITY"

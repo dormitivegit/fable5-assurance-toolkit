@@ -1,8 +1,8 @@
-# Contributing to FABLE5
+# Contributing to Software Evidence Controls
 
-Thank you for helping improve FABLE5. Contributions should keep the toolkit
-small, inspectable, deterministic, and useful to both human reviewers and
-AI-assisted engineering workflows.
+Thank you for helping improve Software Evidence Controls. Contributions should
+keep the toolkit small, inspectable, deterministic, and useful to both human
+reviewers and AI-assisted engineering workflows.
 
 ## Before opening a pull request
 
@@ -19,11 +19,12 @@ For vulnerability reports, do not open a public issue or pull request. Follow
 
 ## Development and tests
 
-FABLE5 requires Python 3.11 or newer and has no non-standard-library Python
-runtime dependencies. Run the public CLI directly from the checkout:
+Software Evidence Controls requires Python 3.11 or newer and has no
+non-standard-library Python runtime dependencies. Run the public CLI directly
+from the checkout:
 
 ```sh
-PYTHONPATH=src python3 -m assurance_toolkit --version
+PYTHONPATH=src python3 -m software_evidence_controls --version
 ```
 
 Run the complete test suite before submitting:

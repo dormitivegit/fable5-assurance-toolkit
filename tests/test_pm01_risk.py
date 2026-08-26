@@ -2,8 +2,8 @@ import copy
 import json
 import unittest
 
-from assurance_toolkit.pilots import NORMAL_VARIANTS, _descriptor
-from assurance_toolkit.risk import classify
+from software_evidence_controls.pilots import NORMAL_VARIANTS, _descriptor
+from software_evidence_controls.risk import classify
 
 
 def base_descriptor(**updates):

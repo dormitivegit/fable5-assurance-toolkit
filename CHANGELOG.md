@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.4.0-rename.1
+
+- Renamed the distribution, repository references, and sole console command
+  from `fable5-assurance-toolkit` / `assurance` to
+  `software-evidence-controls`.
+- Renamed the import package from `assurance_toolkit` to
+  `software_evidence_controls` while preserving package-internal relative
+  imports.
+- Advanced the Python distribution version to `0.4.0rc1` and the product
+  version to `0.4.0-rename.1`, with a repository-surface test binding both
+  version pairs.
+- Retargeted documentation, examples, tests, package metadata, and the
+  informational dogfood workflow to the new product identity while preserving
+  recovery-lineage and published-version history.
+
+This remains a local prerelease candidate. The rename and local validation do
+not create a release, publish a distribution, rename the hosted repository, or
+establish external adoption or acceptance.
+
 ## 0.3.0-recovery.6
 
 - Added a repeatable `--expected-root ROOT` option to `corpus verify`. Each

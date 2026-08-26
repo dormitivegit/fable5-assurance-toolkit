@@ -78,7 +78,10 @@ def _parse_failure(command: str, exc: Exception) -> tuple[dict[str, Any], int]:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="assurance", description="FABLE5 local deterministic assurance toolkit")
+    parser = argparse.ArgumentParser(
+        prog="software-evidence-controls",
+        description="Software Evidence Controls local deterministic assurance toolkit",
+    )
     parser.add_argument("--version", action="store_true", help="show product and Python distribution versions")
     commands = parser.add_subparsers(dest="command")
 
@@ -156,7 +159,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.version:
         sys.stdout.write(
-            f"assurance {PRODUCT_VERSION}\n"
+            f"software-evidence-controls {PRODUCT_VERSION}\n"
             f"python-distribution-version: {PYTHON_DISTRIBUTION_VERSION}\n"
             f"status: {STATUS}\n"
         )

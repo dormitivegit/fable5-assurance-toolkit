@@ -4,13 +4,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from assurance_toolkit.findings import finding, outcome, sort_findings
-from assurance_toolkit.models import PredicateResult
-from assurance_toolkit.terminal import preflight
+from software_evidence_controls.findings import finding, outcome, sort_findings
+from software_evidence_controls.models import PredicateResult
+from software_evidence_controls.terminal import preflight
 
 
 REPOSITORY = Path(__file__).resolve().parents[1]
-SOURCE = REPOSITORY / "src" / "assurance_toolkit"
+SOURCE = REPOSITORY / "src" / "software_evidence_controls"
 PRODUCT_FILES = {
     "PM-01": ("risk.py",),
     "PM-02": ("governance.py",),

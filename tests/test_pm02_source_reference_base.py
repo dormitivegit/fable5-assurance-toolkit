@@ -18,7 +18,7 @@ CONTRACT = REPOSITORY / "contracts" / "schemas" / "PM02_SOURCE_REFERENCE_CONTRAC
 
 def cli(*args, cwd, input_text=None):
     return subprocess.run(
-        [sys.executable, "-m", "assurance_toolkit", *args],
+        [sys.executable, "-m", "software_evidence_controls", *args],
         cwd=cwd,
         env=ENV,
         input=input_text,

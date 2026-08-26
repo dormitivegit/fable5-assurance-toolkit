@@ -1,7 +1,7 @@
 {
   "schema_version": "pm02-source-reference-contract/v1",
   "module_id": "PM-02",
-  "public_interface": "assurance check",
+  "public_interface": "software-evidence-controls check",
   "file_backed_pack": {
     "absolute_source_identity_path": "use the supplied absolute path",
     "relative_source_identity_path": "resolve against the filesystem parent of the pack file",

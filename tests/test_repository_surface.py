@@ -8,11 +8,17 @@ import re
 import tomllib
 import unittest
 
-from assurance_toolkit.cli import build_parser
+from software_evidence_controls.cli import build_parser
+from software_evidence_controls.version import PRODUCT_VERSION, PYTHON_DISTRIBUTION_VERSION
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
-WORKFLOW_PATH = REPOSITORY_ROOT / ".github" / "workflows" / "fable5-dogfood.yml"
+WORKFLOW_PATH = (
+    REPOSITORY_ROOT
+    / ".github"
+    / "workflows"
+    / "software-evidence-controls-dogfood.yml"
+)
 
 
 def profile_command_paths(
@@ -36,7 +42,7 @@ class RepositorySurfaceTests(unittest.TestCase):
         workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
 
         pinned_versions = re.findall(
-            r"fable5-assurance-toolkit==([0-9A-Za-z.+-]+)", workflow
+            r"software-evidence-controls==([0-9A-Za-z.+-]+)", workflow
         )
         self.assertTrue(pinned_versions)
         self.assertTrue(all(version == project_version for version in pinned_versions))
@@ -47,6 +53,14 @@ class RepositorySurfaceTests(unittest.TestCase):
                 line for line in workflow.splitlines() if artifact in line and "corpus verify" in line
             )
             self.assertIn('--expected-root "$source_path"', command_line)
+
+    def test_repository_version_copies_match_runtime_constants(self) -> None:
+        with (REPOSITORY_ROOT / "pyproject.toml").open("rb") as handle:
+            project_version = tomllib.load(handle)["project"]["version"]
+        product_version = (REPOSITORY_ROOT / "VERSION").read_text(encoding="utf-8").strip()
+
+        self.assertEqual(PYTHON_DISTRIBUTION_VERSION, project_version)
+        self.assertEqual(PRODUCT_VERSION, product_version)
 
     def test_readme_scopes_strict_profile_to_commands_that_expose_it(self) -> None:
         readme = (REPOSITORY_ROOT / "README.md").read_text(encoding="utf-8")

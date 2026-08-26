@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from .version import PRODUCT_VERSION
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -33,7 +35,7 @@ class PredicateResult:
 class ModuleResult:
     result: str
     module_id: str
-    module_version: str = "0.3.0-recovery.6"
+    module_version: str = PRODUCT_VERSION
     rule_set_version: str = "recovery-1"
     profile: str = "normal"
     findings: list[Finding] = field(default_factory=list)

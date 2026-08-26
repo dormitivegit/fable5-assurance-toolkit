@@ -16,7 +16,7 @@ fail() {
 }
 
 cleanup() {
-  if [[ -n "$WORK_DIR" && -d "$WORK_DIR" && "$WORK_DIR" == "$TEMP_BASE"/fable5-agent-change-assurance.* ]]; then
+  if [[ -n "$WORK_DIR" && -d "$WORK_DIR" && "$WORK_DIR" == "$TEMP_BASE"/software-evidence-controls-agent-change-assurance.* ]]; then
     rm -rf -- "$WORK_DIR"
   fi
 }
@@ -33,7 +33,7 @@ then
   fail "Python 3.11 or newer is required"
 fi
 
-WORK_DIR=$(mktemp -d "$TEMP_BASE/fable5-agent-change-assurance.XXXXXX")
+WORK_DIR=$(mktemp -d "$TEMP_BASE/software-evidence-controls-agent-change-assurance.XXXXXX")
 SOURCE_DIR="$WORK_DIR/source"
 BASELINE_MANIFEST="$WORK_DIR/baseline.jsonl"
 POST_CHANGE_MANIFEST="$WORK_DIR/post-change.jsonl"
@@ -44,7 +44,7 @@ run_cli() {
   shift
   set +e
   PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$REPOSITORY_ROOT/src" \
-    "$PYTHON_BIN" -m assurance_toolkit "$@" --format json >"$output_file"
+    "$PYTHON_BIN" -m software_evidence_controls "$@" --format json >"$output_file"
   LAST_EXIT=$?
   set -e
   PYTHONDONTWRITEBYTECODE=1 "$PYTHON_BIN" -m json.tool "$output_file"

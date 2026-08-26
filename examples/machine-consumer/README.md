@@ -12,7 +12,7 @@ The script creates a temporary one-file source set, uses `corpus freeze` to
 record its bounded baseline, adds one new source file, and runs:
 
 ```text
-assurance corpus verify MANIFEST --detect-new --format json
+software-evidence-controls corpus verify MANIFEST --detect-new --format json
 ```
 
 When the exact manifest bytes are intended to be a trust root, also use
@@ -39,7 +39,7 @@ parse `findings[]`, and route the structured result:
 import json
 import subprocess
 import sys
-completed = subprocess.run(["assurance", "corpus", "verify", sys.argv[1], "--detect-new", "--format", "json"], capture_output=True, text=True, check=False)
+completed = subprocess.run(["software-evidence-controls", "corpus", "verify", sys.argv[1], "--detect-new", "--format", "json"], capture_output=True, text=True, check=False)
 payload = json.loads(completed.stdout) if completed.stdout else {"findings": []}
 findings = payload["findings"]
 blocking = completed.returncode != 0 or any(item["severity"] in {"ERROR", "HOLD"} for item in findings)

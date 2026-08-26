@@ -4,8 +4,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from assurance_toolkit import corpus
-from assurance_toolkit.pilots import run_pilot
+from software_evidence_controls import corpus
+from software_evidence_controls.pilots import run_pilot
 
 
 class PilotPublicTests(unittest.TestCase):

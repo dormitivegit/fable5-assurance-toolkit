@@ -1,4 +1,4 @@
-name: FABLE5 Informational Dogfood
+name: Software Evidence Controls Informational Dogfood
 
 on:
   push:
@@ -26,17 +26,17 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install the published FABLE5 verifier
+      - name: Install the published Software Evidence Controls verifier
         shell: bash
         run: |
           set -euo pipefail
-          evidence_dir="$RUNNER_TEMP/fable5-dogfood-evidence"
+          evidence_dir="$RUNNER_TEMP/software-evidence-controls-dogfood-evidence"
           mkdir -p "$evidence_dir"
-          python -m pip install --disable-pip-version-check fable5-assurance-toolkit==0.3.0rc6
-          installed_version="$(python -c 'from importlib.metadata import version; print(version("fable5-assurance-toolkit"))')"
-          test "$installed_version" = "0.3.0rc6"
+          python -m pip install --disable-pip-version-check software-evidence-controls==0.4.0rc1
+          installed_version="$(python -c 'from importlib.metadata import version; print(version("software-evidence-controls"))')"
+          test "$installed_version" = "0.4.0rc1"
           {
-            assurance --version
+            software-evidence-controls --version
             printf 'python-distribution-version: %s\n' "$installed_version"
           } > "$evidence_dir/identity.txt"
 
@@ -51,8 +51,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          evidence_dir="$RUNNER_TEMP/fable5-dogfood-evidence"
-          manifest="$RUNNER_TEMP/fable5-task236-base-manifest.jsonl"
+          evidence_dir="$RUNNER_TEMP/software-evidence-controls-dogfood-evidence"
+          manifest="$RUNNER_TEMP/software-evidence-controls-task236-base-manifest.jsonl"
           workspace_path="$GITHUB_WORKSPACE"
           event="$EVENT_NAME"
           mkdir -p "$evidence_dir"
@@ -88,7 +88,7 @@ jobs:
               "event": event,
               "base_sha": base_sha,
               "head_sha": head_sha,
-              "tool": "fable5-assurance-toolkit==0.3.0rc6",
+              "tool": "software-evidence-controls==0.4.0rc1",
               "positive_control_pass": False,
               "canary": {"landed_proven": False, "ci10_observed": False, "process_exit": None},
               "ordinary_tests": {"executed": False, "exit": None, "count": None},
@@ -108,7 +108,7 @@ jobs:
               json.dump(payload, handle, sort_keys=True, indent=2)
               handle.write("\n")
           PY
-            printf '%s\n' 'FABLE5_TASK236=BASE_UNAVAILABLE' >> "$GITHUB_STEP_SUMMARY"
+            printf '%s\n' 'SOFTWARE_EVIDENCE_CONTROLS_TASK236=BASE_UNAVAILABLE' >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
@@ -120,11 +120,11 @@ jobs:
           source_path="$workspace_path/src"
           test -d "$source_path"
 
-          assurance corpus freeze "$source_path" --manifest "$manifest" --format json > /dev/null
+          software-evidence-controls corpus freeze "$source_path" --manifest "$manifest" --format json > /dev/null
           manifest_sha256="$(sha256sum "$manifest" | awk '{print $1}')"
 
           set +e
-          assurance corpus verify "$manifest" --accepted-manifest-sha256 "$manifest_sha256" --expected-root "$source_path" --detect-new --format json > "$evidence_dir/base-positive.json"
+          software-evidence-controls corpus verify "$manifest" --accepted-manifest-sha256 "$manifest_sha256" --expected-root "$source_path" --detect-new --format json > "$evidence_dir/base-positive.json"
           base_positive_exit=$?
           set -e
           python - "$evidence_dir/base-positive.json" "$base_positive_exit" <<'PY'
@@ -138,11 +138,11 @@ jobs:
               raise SystemExit("Task236 positive control is not clean")
           PY
 
-          canary_path="$source_path/.fable5_task236_canary.py"
-          expected_canary_sha256="49851d4c1e906efa99c03b0127c32197490a0d72be438f188d0dcaf67b32a5ac"
+          canary_path="$source_path/.software_evidence_controls_task236_canary.py"
+          expected_canary_sha256="b806ce69af93c9ed1f37bb44b85831cfe94053a53979a5030322288e88e19888"
           printf '%s\n' \
             '# Task236 ephemeral runner-only canary' \
-            'TASK236_CANARY = "fable5-dogfood"' > "$canary_path"
+            'TASK236_CANARY = "software-evidence-controls-dogfood"' > "$canary_path"
           actual_canary_sha256="$(sha256sum "$canary_path" | awk '{print $1}')"
           test "$actual_canary_sha256" = "$expected_canary_sha256"
           test -f "$canary_path"
@@ -154,7 +154,7 @@ jobs:
           } > "$evidence_dir/canary-proof.txt"
 
           set +e
-          assurance corpus verify "$manifest" --accepted-manifest-sha256 "$manifest_sha256" --expected-root "$source_path" --detect-new --format json > "$evidence_dir/canary.json"
+          software-evidence-controls corpus verify "$manifest" --accepted-manifest-sha256 "$manifest_sha256" --expected-root "$source_path" --detect-new --format json > "$evidence_dir/canary.json"
           canary_exit=$?
           set -e
           python - "$evidence_dir/canary.json" "$evidence_dir/canary-decision.json" "$canary_exit" <<'PY'
@@ -198,7 +198,7 @@ jobs:
           failed_test_count="$(grep -c '_FailedTest' "$evidence_dir/ordinary-tests.log" || true)"
 
           set +e
-          assurance corpus verify "$manifest" --accepted-manifest-sha256 "$manifest_sha256" --expected-root "$source_path" --detect-new --format json > "$evidence_dir/head-observation.json" 2> "$evidence_dir/head-observation.stderr"
+          software-evidence-controls corpus verify "$manifest" --accepted-manifest-sha256 "$manifest_sha256" --expected-root "$source_path" --detect-new --format json > "$evidence_dir/head-observation.json" 2> "$evidence_dir/head-observation.stderr"
           head_verify_exit=$?
           set -e
 
@@ -264,7 +264,7 @@ jobs:
               "base_tree": base_tree,
               "head_tree": head_tree,
               "manifest_sha256": manifest_sha256,
-              "tool": "fable5-assurance-toolkit==0.3.0rc6",
+              "tool": "software-evidence-controls==0.4.0rc1",
               "positive_control_pass": int(base_positive_exit) == 0,
               "canary": {
                   "landed_proven": True,
@@ -316,7 +316,7 @@ jobs:
           PY
 
           {
-            printf '%s\n' '## FABLE5 informational dogfood'
+            printf '%s\n' '## Software Evidence Controls informational dogfood'
             printf '%s\n' "- Event: \`$event\`"
             printf '%s\n' "- Base: \`$base_sha\`"
             printf '%s\n' "- Head: \`$head_sha\`"
@@ -330,6 +330,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: fable5-dogfood-evidence
-          path: ${{ runner.temp }}/fable5-dogfood-evidence
+          name: software-evidence-controls-dogfood-evidence
+          path: ${{ runner.temp }}/software-evidence-controls-dogfood-evidence
           if-no-files-found: error

@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from assurance_toolkit.findings import finding, outcome
+from software_evidence_controls.findings import finding, outcome
 
 
 REPOSITORY = Path(__file__).resolve().parents[1]
@@ -17,7 +17,7 @@ ENV = os.environ | {"PYTHONPATH": str(REPOSITORY / "src"), "PYTHONDONTWRITEBYTEC
 
 def cli(*args, input_text=None):
     return subprocess.run(
-        [sys.executable, "-m", "assurance_toolkit", *args],
+        [sys.executable, "-m", "software_evidence_controls", *args],
         cwd=REPOSITORY,
         env=ENV,
         input=input_text,
@@ -114,7 +114,7 @@ class CliOutputContractTests(unittest.TestCase):
     def test_contract_identity_structure_and_deterministic_encoding(self):
         self.assertEqual("cli-output-contract/v2", self.contract["schema_version"])
         self.assertEqual(
-            "FABLE5_CLI_OUTPUT_AND_EXIT_CONTRACT_20260823",
+            "SOFTWARE_EVIDENCE_CONTROLS_CLI_OUTPUT_AND_EXIT_CONTRACT_20260823",
             self.contract["contract_id"],
         )
         self.assertTrue(self.contract["normative"])

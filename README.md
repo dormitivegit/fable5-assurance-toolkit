@@ -1,28 +1,32 @@
-# FABLE5 Assurance Toolkit
+# Software Evidence Controls
 
-FABLE5 is a local, deterministic command-line toolkit for applying assurance
-and conformance controls to AI-assisted software-engineering workflows. It
-turns structured task inputs, governance packs, terminal states, corpus
-manifests, handoffs, closeouts, and evaluation records into reproducible
-findings that humans and automation can inspect.
+Software Evidence Controls is a local, deterministic command-line toolkit for
+applying assurance and conformance controls to AI-assisted
+software-engineering workflows. It turns structured task inputs, governance
+packs, terminal states, corpus manifests, handoffs, closeouts, and evaluation
+records into reproducible findings that humans and automation can inspect.
 
 AI-assisted changes can move faster than the evidence needed to review them.
-FABLE5 makes selected behavioral contracts explicit and repeatable without a
-hosted service, background agent, network call, or model invocation. It
-complements tests and human review; it does not replace either or make release
-decisions.
+Software Evidence Controls makes selected behavioral contracts explicit and
+repeatable without a hosted service, background agent, network call, or model
+invocation. It complements tests and human review; it does not replace either
+or make release decisions.
+
+This project was formerly named `fable5-assurance-toolkit`. “Fable 5” is also
+an Anthropic model name; this project is not affiliated with Anthropic.
 
 ## Quick start
 
-FABLE5 requires Python 3.11 or newer and has no non-standard-library Python
-runtime dependencies. Install the prerelease in an isolated environment:
+Software Evidence Controls requires Python 3.11 or newer and has no
+non-standard-library Python runtime dependencies. Install the prerelease in an
+isolated environment:
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install fable5-assurance-toolkit==0.3.0rc6
-assurance --version
-assurance --help
+python -m pip install software-evidence-controls==0.4.0rc1
+software-evidence-controls --version
+software-evidence-controls --help
 ```
 
 ### Minimal PyPI-only corpus demo
@@ -40,7 +44,7 @@ source_dir="$demo_dir/source"
 manifest="$demo_dir/accepted-manifest.jsonl"
 mkdir -p "$source_dir"
 printf '%s\n' 'value = 1' > "$source_dir/example.py"
-assurance corpus freeze "$source_dir" --manifest "$manifest" --format json
+software-evidence-controls corpus freeze "$source_dir" --manifest "$manifest" --format json
 manifest_sha256="$(python - "$manifest" <<'PY'
 import hashlib
 import pathlib
@@ -50,7 +54,7 @@ print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())
 PY
 )"
 printf '%s\n' 'value = 2' > "$source_dir/example.py"
-if assurance corpus verify "$manifest" \
+if software-evidence-controls corpus verify "$manifest" \
     --accepted-manifest-sha256 "$manifest_sha256" \
     --expected-root "$source_dir" \
     --format json; then
@@ -65,21 +69,21 @@ rm -rf "$demo_dir"
 The JSON finding is the decision input: the expected `CI03_SOURCE_CHANGED`
 HOLD is not an authorization to accept or reject the change.
 
-The PyPI install above provides the `assurance` CLI. The fixture-backed examples
-below use files from a source checkout; those repository fixtures are not
-included in the wheel. For this prerelease, clone the matching release tag and
-enter the repository root:
+The PyPI install above provides the `software-evidence-controls` CLI. The
+fixture-backed examples below use files from a source checkout; those
+repository fixtures are not included in the wheel. For this prerelease, clone
+the matching release tag and enter the repository root:
 
 ```sh
-git clone --branch v0.3.0-recovery.6 --depth 1 \
-  https://github.com/dormitivegit/fable5-assurance-toolkit.git
-cd fable5-assurance-toolkit
+git clone --branch v0.4.0-rename.1 --depth 1 \
+  https://github.com/dormitivegit/software-evidence-controls.git
+cd software-evidence-controls
 ```
 
 Run a deterministic governance-pack check against the checkout fixture:
 
 ```sh
-assurance check fixtures/governance/valid-pack.json --format json
+software-evidence-controls check fixtures/governance/valid-pack.json --format json
 ```
 
 To install the checkout for development instead of the published prerelease,
@@ -104,8 +108,8 @@ stdin packs require absolute source paths.
 For repository-only development without installation, use:
 
 ```sh
-PYTHONPATH=src python3 -m assurance_toolkit --version
-PYTHONPATH=src python3 -m assurance_toolkit --help
+PYTHONPATH=src python3 -m software_evidence_controls --version
+PYTHONPATH=src python3 -m software_evidence_controls --help
 ```
 
 Run the complete test suite:
@@ -116,18 +120,18 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src \
 ```
 
 Use `--format json` when another tool or AI agent will consume the result. Run
-`python3 -m assurance_toolkit <command> --help` for command-specific options.
+`python3 -m software_evidence_controls <command> --help` for command-specific options.
 
 ## Start here: choose a command
 
 | If you need to… | Start with |
 | --- | --- |
-| assess the risk and required controls for a bounded proposed action | `assurance classify fixtures/classify/read-local-document.json --format json` |
-| validate a structured governance document before relying on it | `assurance check PACK.json --format json` |
-| inspect a terminal state or target collision without changing either | `assurance guard STATE.json TARGET --executor NAME --format json` |
-| freeze or verify the exact bytes of a bounded source set | `assurance corpus freeze ROOT --manifest MANIFEST --format json` or `assurance corpus verify MANIFEST --format json` |
-| structurally inspect a handoff or closeout record | `assurance handoff HANDOFF.json --carrier CARRIER --format json` or `assurance closeout CLOSEOUT.json --format json` |
-| prepare preserved evaluation cases or score supplied judgments | `assurance eval prepare CASES.jsonl --out PREPARED.json --format json` or `assurance eval score CASES.jsonl SCORES.jsonl --format json` |
+| assess the risk and required controls for a bounded proposed action | `software-evidence-controls classify fixtures/classify/read-local-document.json --format json` |
+| validate a structured governance document before relying on it | `software-evidence-controls check PACK.json --format json` |
+| inspect a terminal state or target collision without changing either | `software-evidence-controls guard STATE.json TARGET --executor NAME --format json` |
+| freeze or verify the exact bytes of a bounded source set | `software-evidence-controls corpus freeze ROOT --manifest MANIFEST --format json` or `software-evidence-controls corpus verify MANIFEST --format json` |
+| structurally inspect a handoff or closeout record | `software-evidence-controls handoff HANDOFF.json --carrier CARRIER --format json` or `software-evidence-controls closeout CLOSEOUT.json --format json` |
+| prepare preserved evaluation cases or score supplied judgments | `software-evidence-controls eval prepare CASES.jsonl --out PREPARED.json --format json` or `software-evidence-controls eval score CASES.jsonl SCORES.jsonl --format json` |
 
 The commands report bounded evidence. They do not authorize a change, decide a
 merge, or replace human review.
@@ -141,7 +145,7 @@ For an already accepted corpus manifest, bind verification to its exact raw
 bytes as well as its semantic records:
 
 ```sh
-assurance corpus verify MANIFEST \
+software-evidence-controls corpus verify MANIFEST \
   --accepted-manifest-sha256 SHA256 \
   --format json
 ```
@@ -154,7 +158,7 @@ When a caller needs to assert the specific recorded subject before source
 verification, it can repeat `--expected-root ROOT` in manifest-root order:
 
 ```sh
-assurance corpus verify MANIFEST --expected-root ROOT [--expected-root ROOT ...]
+software-evidence-controls corpus verify MANIFEST --expected-root ROOT [--expected-root ROOT ...]
 ```
 
 Each supplied root is normalized with the same lexical and real-path identity
@@ -175,8 +179,8 @@ credential-bearing roots.
 Manifest bytes and hashes are not authority by themselves. A caller-supplied
 `--expected-root` is a subject assertion, not portable rebinding or
 authorization, and human acceptance remains separate. See
-[Architecture](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/ARCHITECTURE.md)
-and [limitations](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/LIMITATIONS_AND_FUTURE_SEAMS.md)
+[Architecture](https://github.com/dormitivegit/software-evidence-controls/blob/main/docs/ARCHITECTURE.md)
+and [limitations](https://github.com/dormitivegit/software-evidence-controls/blob/main/docs/LIMITATIONS_AND_FUTURE_SEAMS.md)
 for the trust boundaries.
 
 `--exclude` uses path containment/prefix semantics, not shell glob matching.
@@ -192,7 +196,7 @@ the current normal-profile corpus decision semantics.
 ## CLI output and exit contract
 
 The normative, machine-readable contract is
-[`contracts/schemas/CLI_OUTPUT_CONTRACT.json`](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/contracts/schemas/CLI_OUTPUT_CONTRACT.json).
+[`contracts/schemas/CLI_OUTPUT_CONTRACT.json`](https://github.com/dormitivegit/software-evidence-controls/blob/main/contracts/schemas/CLI_OUTPUT_CONTRACT.json).
 It distinguishes ModuleResult JSON, CLI parse-failure JSON, argparse usage
 text, help/version text, and the existing synthetic-pilot JSON shape. In
 particular, parse-failure JSON uses the command string as `module_id` and
@@ -243,7 +247,7 @@ change with risk, integrity, and handoff evidence:
 ```
 
 The example is local, network-free, self-cleaning, and leaves acceptance to a
-human reviewer. See the [example guide](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/examples/agent-change-assurance/README.md)
+human reviewer. See the [example guide](https://github.com/dormitivegit/software-evidence-controls/blob/main/examples/agent-change-assurance/README.md)
 for the expected flow and claim boundaries.
 
 ## Try a machine-consumer integration
@@ -258,11 +262,11 @@ This small, disposable example creates a bounded source set, consumes JSON
 from `corpus verify --detect-new`, and takes a review branch when a nonblocking
 `WARN` finding is present even though the process exit is `0`. It demonstrates
 why a consumer must inspect structured findings rather than branch on exit
-status alone. See the [machine-consumer guide](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/examples/machine-consumer/README.md).
+status alone. See the [machine-consumer guide](https://github.com/dormitivegit/software-evidence-controls/blob/main/examples/machine-consumer/README.md).
 
 ## Minimal CI and agent decision pattern
 
-Use ordinary tests and tools first, then run the bounded FABLE5 deterministic
+Use ordinary tests and tools first, then run the bounded Software Evidence Controls deterministic
 check, parse its structured findings and exit semantics, route the result to
 CI, an agent, or a reviewer, and retain human acceptance as the final step.
 Exit status alone is insufficient when nonblocking `WARN` findings are present.
@@ -278,7 +282,7 @@ invocation error, not a finding.
 | --- | --- |
 | ordinary tests | behavior under the exercised test suite |
 | `git diff` | revision-tracked changed paths and lines |
-| FABLE5 | bounded contract and accepted-subject evidence |
+| Software Evidence Controls | bounded contract and accepted-subject evidence |
 | human review | intent, admissibility, authorization, and acceptance |
 
 These are complementary scopes; none replaces the others.
@@ -318,16 +322,16 @@ atomic no-clobber seam; it is not reachable from ordinary project workflows.
 - **No hidden control plane:** there is no daemon, database, web UI, installed
   hook, automatic model call, semantic auto-score, or automatic promotion path.
 
-See [Architecture](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/ARCHITECTURE.md),
-[module scope and non-goals](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/MODULE_SCOPE_AND_NON_GOALS.md), and
-[known limitations](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/LIMITATIONS_AND_FUTURE_SEAMS.md) for the detailed
-boundaries. Read [validated workflows](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/VALIDATED_WORKFLOWS.md) for two
+See [Architecture](https://github.com/dormitivegit/software-evidence-controls/blob/main/docs/ARCHITECTURE.md),
+[module scope and non-goals](https://github.com/dormitivegit/software-evidence-controls/blob/main/docs/MODULE_SCOPE_AND_NON_GOALS.md), and
+[known limitations](https://github.com/dormitivegit/software-evidence-controls/blob/main/docs/LIMITATIONS_AND_FUTURE_SEAMS.md) for the detailed
+boundaries. Read [validated workflows](https://github.com/dormitivegit/software-evidence-controls/blob/main/docs/VALIDATED_WORKFLOWS.md) for two
 bounded, maintainer-controlled downstream cases and their claim limits.
 
 ## AI-agent and maintainer workflow
 
 1. A human or automation supplies a bounded input and chooses the applicable
-   FABLE5 command and profile.
+   Software Evidence Controls command and profile.
 2. An AI agent or CI job runs the command, preserves its structured output, and
    treats nonzero exit codes and findings as review evidence.
 3. The submitter runs the test suite and explains any intentional behavioral
@@ -335,7 +339,7 @@ bounded, maintainer-controlled downstream cases and their claim limits.
 4. A maintainer reviews the code, tests, deterministic output, compatibility,
    and security impact before deciding whether to merge or release.
 
-FABLE5 reports on the contracts it implements. It does not establish business
+Software Evidence Controls reports on the contracts it implements. It does not establish business
 truth, infer authorization, approve its own changes, or promote a candidate to
 production. Those decisions remain with people responsible for the project.
 
@@ -346,15 +350,15 @@ See [recovery lineage](docs/RECOVERY_LINEAGE.md) for status, provenance, and cla
 ## Contributing
 
 Focused issues and pull requests are welcome. Read
-[CONTRIBUTING.md](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/CONTRIBUTING.md) for test, determinism, and AI-assisted
+[CONTRIBUTING.md](https://github.com/dormitivegit/software-evidence-controls/blob/main/CONTRIBUTING.md) for test, determinism, and AI-assisted
 contribution expectations. Maintainer roles are documented in
-[MAINTAINERS.md](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/MAINTAINERS.md).
+[MAINTAINERS.md](https://github.com/dormitivegit/software-evidence-controls/blob/main/MAINTAINERS.md).
 
 ## Security
 
 Do not report vulnerabilities or exploit details in a public issue. Follow the
-private reporting process in [SECURITY.md](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/SECURITY.md).
+private reporting process in [SECURITY.md](https://github.com/dormitivegit/software-evidence-controls/blob/main/SECURITY.md).
 
 ## License
 
-Licensed under the [Apache License 2.0](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/LICENSE).
+Licensed under the [Apache License 2.0](https://github.com/dormitivegit/software-evidence-controls/blob/main/LICENSE).

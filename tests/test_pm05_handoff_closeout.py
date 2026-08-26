@@ -4,8 +4,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from assurance_toolkit.closeout import validate_closeout
-from assurance_toolkit.handoff import (
+from software_evidence_controls.closeout import validate_closeout
+from software_evidence_controls.handoff import (
     DIRECT_CARRIER_SHA256,
     SKILL_PACKAGE_SHA256,
     SKILL_RUNTIME_SHA256,

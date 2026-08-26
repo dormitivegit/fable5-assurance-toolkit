@@ -3,9 +3,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from assurance_toolkit.evaluation import CASESET_SHA256, prepare, score
-from assurance_toolkit.identities import file_identity
-from assurance_toolkit.io_utils import read_jsonl, sha256_file
+from software_evidence_controls.evaluation import CASESET_SHA256, prepare, score
+from software_evidence_controls.identities import file_identity
+from software_evidence_controls.io_utils import read_jsonl, sha256_file
 
 
 REPOSITORY = Path(__file__).resolve().parents[1]
