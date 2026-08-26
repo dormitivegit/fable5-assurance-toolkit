@@ -15,8 +15,8 @@ synthesized.
 ## Project status and provenance
 
 ```text
-PRODUCT_VERSION=0.3.0-recovery.6
-PYTHON_DISTRIBUTION_VERSION=0.3.0rc6
+PRODUCT_VERSION=0.4.0-rename.1
+PYTHON_DISTRIBUTION_VERSION=0.4.0rc1
 STATUS=full-functional-recovery-candidate
 LINEAGE_ID=FABLE5-ASSURANCE-TOOLKIT-FULL-FUNCTIONAL-RECOVERY-20260713
 ```
@@ -39,13 +39,15 @@ candidate adds the explicit expected-root subject assertion to
 before recorded-source verification. Omitting `--expected-root` preserves
 legacy behavior, and manifests remain bound to the absolute paths recorded at
 freeze time; they are not portable or rebindable. The current published
-prerelease is `fable5-assurance-toolkit==0.3.0rc6`; the recovery.5 publication
-remains historical context rather than the current PyPI subject.
+prerelease is `software-evidence-controls==0.4.0rc1`; the recovery.5 and
+recovery.6 publications, including `fable5-assurance-toolkit==0.3.0rc5` and
+`fable5-assurance-toolkit==0.3.0rc6`, remain historical artifacts rather than
+the current PyPI subject.
 
 The current status means the six modules and public interface have been
 reconstructed and mechanically tested. Bounded independent review exists for
 the current contract/runtime correction; this is not a claim of comprehensive
 independent review, user acceptance, external validation, canonical promotion,
 production readiness, or ecosystem adoption. See
-[status semantics](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/STATUS_SEMANTICS.md) and
-[recovery lineage](https://github.com/dormitivegit/fable5-assurance-toolkit/blob/main/docs/RECOVERY_LINEAGE.md) for the precise claims.
+[status semantics](https://github.com/dormitivegit/software-evidence-controls/blob/main/docs/STATUS_SEMANTICS.md) and
+[recovery lineage](https://github.com/dormitivegit/software-evidence-controls/blob/main/docs/RECOVERY_LINEAGE.md) for the precise claims.
