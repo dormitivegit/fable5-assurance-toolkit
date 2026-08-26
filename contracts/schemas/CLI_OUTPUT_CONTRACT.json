@@ -1,11 +1,11 @@
 {
   "schema_version": "cli-output-contract/v2",
-  "contract_id": "FABLE5_CLI_OUTPUT_AND_EXIT_CONTRACT_20260823",
+  "contract_id": "SOFTWARE_EVIDENCE_CONTROLS_CLI_OUTPUT_AND_EXIT_CONTRACT_20260823",
   "normative": true,
   "authority_direction": "PUBLISHED_CONTRACT_TO_TEST_EXPECTATION_TO_ACTUAL_CLI_OUTPUT",
   "runtime_generation": {
-    "product_version": "0.3.0-recovery.6",
-    "python_distribution_version": "0.3.0rc6",
+    "product_version": "0.4.0-rename.1",
+    "python_distribution_version": "0.4.0rc1",
     "status": "full-functional-recovery-candidate"
   },
   "scope": {
@@ -50,7 +50,7 @@
         "FAIL",
         "HOLD"
       ],
-      "module_version": "0.3.0-recovery.6",
+      "module_version": "0.4.0-rename.1",
       "modules": {
         "PM-01": {
           "rule_set_version": "rr-v1-recovery",
@@ -263,7 +263,7 @@
         "eval",
         "pilot"
       ],
-      "module_version": "0.3.0-recovery.6",
+      "module_version": "0.4.0-rename.1",
       "rule_set_version": "recovery-1",
       "profile": "normal",
       "finding": {
@@ -279,7 +279,7 @@
       "structured_result_document": false,
       "stdout_empty": true,
       "stderr_contains": [
-        "usage: assurance"
+        "usage: software-evidence-controls"
       ],
       "exit_code": 2
     },
@@ -295,8 +295,8 @@
             "--help"
           ],
           "stdout_contains": [
-            "usage: assurance",
-            "FABLE5 local deterministic assurance toolkit"
+            "usage: software-evidence-controls",
+            "Local deterministic CLI for evidence controls; no third-party dependencies"
           ]
         },
         "version": {
@@ -304,8 +304,8 @@
             "--version"
           ],
           "stdout_contains": [
-            "assurance 0.3.0-recovery.6",
-            "python-distribution-version: 0.3.0rc6",
+            "software-evidence-controls 0.4.0-rename.1",
+            "python-distribution-version: 0.4.0rc1",
             "status: full-functional-recovery-candidate"
           ]
         }

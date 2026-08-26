@@ -28,7 +28,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Check CLI version
-        run: PYTHONPATH=src python -m assurance_toolkit --version
+        run: PYTHONPATH=src python -m software_evidence_controls --version
 
       - name: Run tests
         run: PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python -m unittest discover -s tests -v
@@ -64,5 +64,5 @@ jobs:
         run: |
           python -m venv .package-smoke
           .package-smoke/bin/python -m pip install --no-index --no-deps dist/*.whl
-          .package-smoke/bin/assurance --version
-          .package-smoke/bin/assurance classify fixtures/classify/read-local-document.json --format json | .package-smoke/bin/python -c 'import json, sys; payload = json.load(sys.stdin); assert payload["result"] == "PASS" and payload["tier"] == "T0"'
+          .package-smoke/bin/software-evidence-controls --version
+          .package-smoke/bin/software-evidence-controls classify fixtures/classify/read-local-document.json --format json | .package-smoke/bin/python -c 'import json, sys; payload = json.load(sys.stdin); assert payload["result"] == "PASS" and payload["tier"] == "T0"'

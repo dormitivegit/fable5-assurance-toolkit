@@ -1,5 +1,5 @@
 {
-  "schema": "FABLE5_VA01_SUCCESSOR_EVAL_SCORING_V1",
+  "schema": "SOFTWARE_EVIDENCE_CONTROLS_VA01_SUCCESSOR_EVAL_SCORING_V1",
   "per_case_scoring": {
     "scale": {
       "0": "FAIL — 触发任一 automatic_fail_condition，或 pass_conditions 满足少于半数",

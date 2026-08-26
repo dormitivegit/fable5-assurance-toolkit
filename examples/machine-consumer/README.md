@@ -6,11 +6,13 @@ Run this example from a clean repository checkout:
 python3 examples/machine-consumer/run.py
 ```
 
+This example runs the checkout source, not the installed distribution.
+
 The script creates a temporary one-file source set, uses `corpus freeze` to
 record its bounded baseline, adds one new source file, and runs:
 
 ```text
-assurance corpus verify MANIFEST --detect-new --format json
+software-evidence-controls corpus verify MANIFEST --detect-new --format json
 ```
 
 When the exact manifest bytes are intended to be a trust root, also use
@@ -29,6 +31,21 @@ The script prints normalized decision markers rather than temporary paths or
 raw manifests, so its observable result is deterministic. It uses no network
 services, removes its temporary workspace automatically, and is exercised by a
 repository test.
+
+For another repository, the portable pattern is to call the installed CLI,
+parse `findings[]`, and route the structured result:
+
+```python
+import json
+import subprocess
+import sys
+completed = subprocess.run(["software-evidence-controls", "corpus", "verify", sys.argv[1], "--detect-new", "--format", "json"], capture_output=True, text=True, check=False)
+payload = json.loads(completed.stdout) if completed.stdout else {"findings": []}
+findings = payload["findings"]
+blocking = completed.returncode != 0 or any(item["severity"] in {"ERROR", "HOLD"} for item in findings)
+route = "BLOCK" if blocking else ("REVIEW" if findings else "CONTINUE")
+print(route)
+```
 
 The review branch is still only evidence for a maintainer. It does not approve
 the new source, authorize a change, or replace a human decision.

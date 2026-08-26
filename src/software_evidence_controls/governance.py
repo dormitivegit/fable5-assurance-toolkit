@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import os
+from pathlib import Path
 from typing import Any
 
 from .findings import finding, outcome, sort_findings
@@ -15,6 +17,30 @@ RULE_VERSION = "gp-v1-recovery"
 SUPPORTED_VERSIONS = {"governance-pack/v1", "1.0"}
 AUTH_STATES = {"AUTHORIZED", "USER_AUTHORIZATION"}
 NON_AUTH_STATES = {"RECOMMENDED", "PROPOSED", "PROPOSED_PENDING_APPROVAL", "NOT_AUTHORIZED", "REJECTED", "SUPERSEDED"}
+
+
+def _bind_relative_source(
+    identity: Any,
+    source_base: str | Path | None,
+) -> tuple[Any, str | None]:
+    if isinstance(identity, str):
+        path_text = identity
+        path_key = None
+    elif isinstance(identity, dict):
+        path_key = "path" if identity.get("path") else "source_path"
+        path_text = identity.get(path_key)
+    else:
+        return identity, None
+    if not path_text or Path(path_text).is_absolute():
+        return identity, None
+    if source_base is None:
+        return identity, "relative source path requires a file-backed pack parent; --stdin accepts only absolute source paths"
+    normalized = Path(os.path.abspath(os.path.normpath(Path(source_base) / path_text)))
+    if path_key is None:
+        return str(normalized), None
+    bound = dict(identity)
+    bound[path_key] = str(normalized)
+    return bound, None
 
 
 def _claim_id(claim: dict[str, Any], index: int) -> str:
@@ -34,6 +60,7 @@ def check(
     profile: str = "normal",
     source_resolver=exact_source_resolves,
     authority_identity: str | None = None,
+    source_base: str | Path | None = None,
 ) -> ModuleResult:
     findings = []
     expected_authority = normalize_authority_identity(authority_identity)
@@ -78,7 +105,8 @@ def check(
                 load_bearing_problem = True
                 findings.append(finding("GP01_MISSING_EVIDENCE", "ERROR", cid, "source", "verified load-bearing claim needs exact source identity and location", {"identity_present": bool(identity), "location_present": bool(location)}))
             else:
-                resolved, evidence = source_resolver(identity, location)
+                bound_identity, base_error = _bind_relative_source(identity, source_base)
+                resolved, evidence = (False, base_error) if base_error else source_resolver(bound_identity, location)
                 if not resolved:
                     load_bearing_problem = True
                     findings.append(finding("GP05_BROKEN_EVIDENCE_REFERENCE", "ERROR", cid, "source", "load-bearing evidence reference does not resolve", evidence))

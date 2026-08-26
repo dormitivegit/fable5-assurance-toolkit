@@ -13,7 +13,7 @@ ENV = os.environ | {"PYTHONPATH": str(REPOSITORY / "src"), "PYTHONDONTWRITEBYTEC
 
 def cli(*args, input_text=None, cwd=REPOSITORY):
     return subprocess.run(
-        [sys.executable, "-m", "assurance_toolkit", *args],
+        [sys.executable, "-m", "software_evidence_controls", *args],
         cwd=cwd,
         env=ENV,
         input=input_text,
@@ -28,8 +28,8 @@ class PublicCliTests(unittest.TestCase):
     def test_version(self):
         result = cli("--version")
         self.assertEqual(0, result.returncode)
-        self.assertIn("assurance 0.3.0-recovery.6", result.stdout)
-        self.assertIn("0.3.0rc6", result.stdout)
+        self.assertIn("software-evidence-controls 0.4.0-rename.1", result.stdout)
+        self.assertIn("0.4.0rc1", result.stdout)
 
     def test_help_lists_complete_surface(self):
         result = cli("--help")
@@ -83,6 +83,7 @@ class PublicCliTests(unittest.TestCase):
             pack = json.loads((REPOSITORY / "fixtures/governance/valid-pack.json").read_text(encoding="utf-8"))
             pack["actions"][0].update({"executed": True, "mutates": True, "authorization_ref": "DEC-001"})
             path = Path(temporary) / "pack.json"
+            (Path(temporary) / "source.txt").write_bytes((REPOSITORY / "fixtures/governance/source.txt").read_bytes())
             path.write_text(json.dumps(pack), encoding="utf-8")
             matched = cli("check", str(path), "--authority-id", "PROJECT_AUTHORITY", "--format", "json")
             mismatched = cli("check", str(path), "--authority-id", "OTHER_AUTHORITY", "--format", "json")

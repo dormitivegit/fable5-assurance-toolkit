@@ -1,9 +1,10 @@
 # Successor evaluation contract
 
-This directory preserves FABLE5's offline successor-evaluation baseline. It is
-a bounded behavioral contract for examining whether an agent handles evidence,
-authorization, terminal state, scope, and recovery constraints. It is not a
-model integration or a release-approval mechanism.
+This directory preserves the offline successor-evaluation baseline for
+Software Evidence Controls. It is a bounded behavioral contract for examining
+whether an agent handles evidence, authorization, terminal state, scope, and
+recovery constraints. It is not a model integration or a release-approval
+mechanism.
 
 ## Files
 
@@ -19,12 +20,12 @@ The preserved material is mostly Chinese, and that multilingual content is
 intentional. It remains part of the hash-bound evaluation baseline rather than
 being silently translated or rewritten.
 
-`assurance eval prepare` validates the preserved contract identities and writes
+`software-evidence-controls eval prepare` validates the preserved contract identities and writes
 a no-clobber participant view that excludes hidden scoring fields. It does not
-invoke a model. `assurance eval score` validates externally supplied score
+invoke a model. `software-evidence-controls eval score` validates externally supplied score
 records and calculates the deterministic totals and bands. A human or external
 evaluator still performs the semantic judgment and supplies evidence quotes;
-FABLE5 does not infer those judgments.
+Software Evidence Controls does not infer those judgments.
 
 The current scope excludes hosted benchmarking, automatic semantic scoring,
 model calls, deployment authorization, and automatic promotion. Evaluation

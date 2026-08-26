@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Consume a nonblocking FABLE5 JSON finding with an explicit review branch."""
+"""Consume a nonblocking Software Evidence Controls JSON finding with an explicit review branch."""
 
 from __future__ import annotations
 
@@ -14,13 +14,13 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
 
-def run_assurance(*arguments: str) -> tuple[int, dict[str, object]]:
+def run_software_evidence_controls(*arguments: str) -> tuple[int, dict[str, object]]:
     environment = os.environ | {
         "PYTHONDONTWRITEBYTECODE": "1",
         "PYTHONPATH": str(REPOSITORY_ROOT / "src"),
     }
     completed = subprocess.run(
-        [sys.executable, "-m", "assurance_toolkit", *arguments, "--format", "json"],
+        [sys.executable, "-m", "software_evidence_controls", *arguments, "--format", "json"],
         cwd=REPOSITORY_ROOT,
         env=environment,
         text=True,
@@ -29,7 +29,9 @@ def run_assurance(*arguments: str) -> tuple[int, dict[str, object]]:
         check=False,
     )
     if completed.stderr:
-        raise RuntimeError(f"assurance wrote to stderr: {completed.stderr.strip()}")
+        raise RuntimeError(
+            f"software-evidence-controls wrote to stderr: {completed.stderr.strip()}"
+        )
     return completed.returncode, json.loads(completed.stdout)
 
 
@@ -39,20 +41,22 @@ def require(condition: bool, message: str) -> None:
 
 
 def main() -> int:
-    with tempfile.TemporaryDirectory(prefix="fable5-machine-consumer-") as temporary:
+    with tempfile.TemporaryDirectory(
+        prefix="software-evidence-controls-machine-consumer-"
+    ) as temporary:
         workspace = Path(temporary)
         source = workspace / "source"
         source.mkdir()
         manifest = workspace / "baseline.jsonl"
         (source / "tracked.py").write_text("VALUE = 'tracked'\n", encoding="utf-8")
 
-        freeze_exit, freeze = run_assurance(
+        freeze_exit, freeze = run_software_evidence_controls(
             "corpus", "freeze", str(source), "--manifest", str(manifest)
         )
         require(freeze_exit == 0 and freeze["result"] == "PASS", "baseline freeze failed")
 
         (source / "new.py").write_text("VALUE = 'new'\n", encoding="utf-8")
-        verify_exit, verification = run_assurance(
+        verify_exit, verification = run_software_evidence_controls(
             "corpus", "verify", str(manifest), "--detect-new"
         )
         findings = verification["findings"]

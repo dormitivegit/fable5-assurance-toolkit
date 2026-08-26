@@ -16,9 +16,9 @@ The primary maintainer is responsible for:
   responsible disclosure;
 - setting project direction and keeping the public roadmap and documentation
   aligned with implemented behavior; and
-- preserving FABLE5's behavioral contracts, deterministic outputs, and
-  fail-closed boundaries, or clearly documenting and testing intentional
-  contract changes.
+- preserving the behavioral contracts, deterministic outputs, and fail-closed
+  boundaries of Software Evidence Controls, or clearly documenting and testing
+  intentional contract changes.
 
 Community members may propose changes and participate in review. Repository
 and release decisions remain the responsibility of the maintainer, with

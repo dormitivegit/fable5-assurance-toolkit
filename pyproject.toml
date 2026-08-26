@@ -3,9 +3,9 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fable5-assurance-toolkit"
-version = "0.3.0rc6"
-description = "Local deterministic assurance controls reconstructed under a new lineage"
+name = "software-evidence-controls"
+version = "0.4.0rc1"
+description = "Local deterministic CLI for evidence controls; no third-party dependencies"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -21,11 +21,11 @@ classifiers = [
 ]
 
 [project.scripts]
-assurance = "assurance_toolkit.cli:main"
+software-evidence-controls = "software_evidence_controls.cli:main"
 
 [project.urls]
-Repository = "https://github.com/dormitivegit/fable5-assurance-toolkit"
-Issues = "https://github.com/dormitivegit/fable5-assurance-toolkit/issues"
+Repository = "https://github.com/dormitivegit/software-evidence-controls"
+Issues = "https://github.com/dormitivegit/software-evidence-controls/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

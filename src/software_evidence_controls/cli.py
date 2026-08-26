@@ -78,7 +78,10 @@ def _parse_failure(command: str, exc: Exception) -> tuple[dict[str, Any], int]:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="assurance", description="FABLE5 local deterministic assurance toolkit")
+    parser = argparse.ArgumentParser(
+        prog="software-evidence-controls",
+        description="Local deterministic CLI for evidence controls; no third-party dependencies",
+    )
     parser.add_argument("--version", action="store_true", help="show product and Python distribution versions")
     commands = parser.add_subparsers(dest="command")
 
@@ -106,17 +109,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     corpus_parser = commands.add_parser("corpus", help="freeze or verify a bounded corpus")
     corpus_commands = corpus_parser.add_subparsers(dest="corpus_command", required=True)
-    freeze_parser = corpus_commands.add_parser("freeze")
-    freeze_parser.add_argument("roots", nargs="+")
-    freeze_parser.add_argument("--manifest", required=True)
-    freeze_parser.add_argument("--exclude", action="append", default=[])
-    freeze_parser.add_argument("--format", choices=("text", "json"), default="text")
-    verify_parser = corpus_commands.add_parser("verify")
-    verify_parser.add_argument("manifest")
-    verify_parser.add_argument("--accepted-manifest-sha256", metavar="SHA256")
+    freeze_parser = corpus_commands.add_parser("freeze", help="record exact bytes for bounded source roots")
+    freeze_parser.add_argument("roots", nargs="+", help="source root path; repeat positionally for multiple roots")
+    freeze_parser.add_argument("--manifest", required=True, help="write the new manifest at this explicit path")
+    freeze_parser.add_argument("--exclude", action="append", default=[], help="exclude by path containment/prefix semantics; not shell-glob matching")
+    freeze_parser.add_argument("--format", choices=("text", "json"), default="text", help="select human-readable text or structured JSON output")
+    verify_parser = corpus_commands.add_parser("verify", help="verify current sources against an accepted manifest")
+    verify_parser.add_argument("manifest", help="manifest path to verify")
+    verify_parser.add_argument("--accepted-manifest-sha256", metavar="SHA256", help="bind verification to the caller-accepted exact manifest bytes")
     verify_parser.add_argument("--expected-root", action="append", default=None, metavar="ROOT", help="assert a manifest root by index")
-    verify_parser.add_argument("--detect-new", action="store_true")
-    verify_parser.add_argument("--format", choices=("text", "json"), default="text")
+    verify_parser.add_argument("--detect-new", action="store_true", help="report newly discovered sources as nonblocking CI10 WARN under current corpus semantics")
+    verify_parser.add_argument("--format", choices=("text", "json"), default="text", help="select human-readable text or structured JSON output")
 
     handoff_parser = commands.add_parser("handoff", help="observe/lint a handoff against an exact carrier")
     handoff_parser.add_argument("file")
@@ -156,7 +159,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.version:
         sys.stdout.write(
-            f"assurance {PRODUCT_VERSION}\n"
+            f"software-evidence-controls {PRODUCT_VERSION}\n"
             f"python-distribution-version: {PYTHON_DISTRIBUTION_VERSION}\n"
             f"status: {STATUS}\n"
         )
@@ -169,7 +172,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "classify":
             payload = classify(_input(args.path, args.stdin), args.profile).to_dict()
         elif args.command == "check":
-            payload = check(_input(args.path, args.stdin), args.profile, authority_identity=args.authority_id).to_dict()
+            source_base = None if args.stdin or args.path is None else Path(args.path).resolve(strict=False).parent
+            payload = check(
+                _input(args.path, args.stdin),
+                args.profile,
+                authority_identity=args.authority_id,
+                source_base=source_base,
+            ).to_dict()
             if args.tier:
                 payload["supplied_tier"] = args.tier
         elif args.command == "guard":

@@ -4,7 +4,7 @@
 
 An upstream coding agent can generate a change, but its output alone does not
 provide an independent record of the task boundary, the previous file identity,
-or whether its handoff is structurally reviewable. This example uses FABLE5 to
+or whether its handoff is structurally reviewable. This example uses Software Evidence Controls to
 produce deterministic evidence around those selected contracts. A human still
 decides whether the change is correct and acceptable.
 
@@ -30,7 +30,7 @@ asserted results, findings, counts, modes, and final summary remain the same.
 
 ```text
 bounded task
-  → FABLE5 risk classification
+  → Software Evidence Controls risk classification
   → frozen baseline and positive verification
   → simulated upstream agent change
   → deterministic change detection
@@ -57,7 +57,7 @@ The handoff template lists the authority-state vocabulary that the current
 observation contract requires it to distinguish. The list does not declare the
 simulated change authorized.
 
-The script asserts each of these outcomes and exits nonzero if actual FABLE5
+The script asserts each of these outcomes and exits nonzero if actual Software Evidence Controls
 behavior differs.
 
 ## What this does not prove

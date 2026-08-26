@@ -5,8 +5,8 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from assurance_toolkit.governance import check
-from assurance_toolkit.io_utils import sha256_bytes, sha256_file
+from software_evidence_controls.governance import check
+from software_evidence_controls.io_utils import sha256_bytes, sha256_file
 
 
 DEFAULT_AUTHORITY = "PROJECT_AUTHORITY"

@@ -40,7 +40,7 @@ a current compatibility, adoption, or release-gate authority.
 
 ## Trust boundaries
 
-- **Source/workspace control:** FABLE5 can inspect bounded filesystem state; it
+- **Source/workspace control:** Software Evidence Controls can inspect bounded filesystem state; it
   cannot make an untrusted workspace trustworthy.
 - **Manifest/anchor control:** an accepted manifest SHA-256 binds exact
   manifest bytes. If one actor controls both a mutable manifest and its anchor,
